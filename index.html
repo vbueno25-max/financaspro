@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard financeiro pessoal para controle de receitas, despesas, orçamento e projeção financeira">
+    <title>FinançasPro — Dashboard Financeiro Pessoal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i data-lucide="wallet"></i></div>
+            <span class="brand-text">FinançasPro</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
+                <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="transactions" id="nav-transactions">
+                <i data-lucide="arrow-left-right"></i><span>Transações</span>
+            </a>
+            <a href="#" class="nav-item" data-section="budget" id="nav-budget">
+                <i data-lucide="target"></i><span>Orçamentos</span>
+            </a>
+            <a href="#" class="nav-item" data-section="banks" id="nav-banks">
+                <i data-lucide="landmark"></i><span>Contas</span>
+            </a>
+            <a href="#" class="nav-item" data-section="categories" id="nav-categories">
+                <i data-lucide="tags"></i><span>Categorias</span>
+            </a>
+            <a href="#" class="nav-item" data-section="projection" id="nav-projection">
+                <i data-lucide="calendar-days"></i><span>Visão Mensal</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="sidebar-btn" id="btn-export" title="Exportar dados"><i data-lucide="download"></i><span>Exportar</span></button>
+            <button class="sidebar-btn" id="btn-import" title="Importar dados"><i data-lucide="upload"></i><span>Importar</span></button>
+            <input type="file" id="import-file-input" accept=".json" hidden>
+        </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header" id="mobile-header">
+        <button class="menu-toggle" id="menu-toggle"><i data-lucide="menu"></i></button>
+        <span class="mobile-brand">FinançasPro</span>
+        <button class="btn btn-primary btn-sm" id="btn-add-mobile"><i data-lucide="plus"></i></button>
+    </header>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1 class="page-title" id="page-title">Dashboard</h1>
+                <div class="month-navigator" id="month-navigator">
+                    <button class="month-nav-btn" id="btn-prev-month"><i data-lucide="chevron-left"></i></button>
+                    <span class="month-display" id="month-display">Junho 2026</span>
+                    <button class="month-nav-btn" id="btn-next-month"><i data-lucide="chevron-right"></i></button>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-add-transaction"><i data-lucide="plus"></i><span>Nova Transação</span></button>
+        </div>
+
+        <!-- ===== DASHBOARD ===== -->
+        <section id="section-dashboard" class="section active">
+            <div class="overview-grid">
+                <div class="overview-card" id="card-balance">
+                    <div class="card-header-row">
+                        <div class="card-icon card-icon-balance"><i data-lucide="wallet"></i></div>
+                        <span class="card-badge" id="badge-balance"></span>
+                    </div>
+                    <p class="card-label">Saldo Total</p>
+                    <h2 class="card-value" id="value-balance">R$ 0,00</h2>
+                </div>
+                <div class="overview-card" id="card-income">
+                    <div class="card-header-row">
+                        <div class="card-icon card-icon-income"><i data-lucide="trending-up"></i></div>
+                        <span class="card-badge" id="badge-income"></span>
+                    </div>
+                    <p class="card-label">Receitas do Mês</p>
+                    <h2 class="card-value" id="value-income">R$ 0,00</h2>
+                </div>
+                <div class="overview-card" id="card-expenses">
+                    <div class="card-header-row">
+                        <div class="card-icon card-icon-expenses"><i data-lucide="trending-down"></i></div>
+                        <span class="card-badge" id="badge-expenses"></span>
+                    </div>
+                    <p class="card-label">Despesas do Mês</p>
+                    <h2 class="card-value" id="value-expenses">R$ 0,00</h2>
+                </div>
+                <div class="overview-card" id="card-savings">
+                    <div class="card-header-row">
+                        <div class="card-icon card-icon-savings"><i data-lucide="piggy-bank"></i></div>
+                        <span class="card-badge" id="badge-savings"></span>
+                    </div>
+                    <p class="card-label">Economia do Mês</p>
+                    <h2 class="card-value" id="value-savings">R$ 0,00</h2>
+                </div>
+            </div>
+            <div class="banks-overview-grid" id="banks-overview-grid"></div>
+
+            <div class="dashboard-grid">
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-card-header"><h3>Receitas vs Despesas</h3><span class="chart-subtitle">Últimos 6 meses</span></div>
+                    <div class="chart-wrapper"><canvas id="chart-income-expenses"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header"><h3>Despesas por Categoria</h3><span class="chart-subtitle">Mês atual</span></div>
+                    <div class="chart-wrapper chart-wrapper-doughnut"><canvas id="chart-categories"></canvas></div>
+                </div>
+            </div>
+            <div class="chart-card chart-full">
+                <div class="chart-card-header"><h3>Evolução do Saldo</h3><span class="chart-subtitle">Últimos 6 meses</span></div>
+                <div class="chart-wrapper"><canvas id="chart-balance"></canvas></div>
+            </div>
+            <div class="card-section">
+                <div class="card-section-header"><h3>Transações Recentes</h3><a href="#" class="link-see-all" id="link-see-all">Ver todas →</a></div>
+                <div class="transactions-list" id="recent-transactions-list"></div>
+            </div>
+        </section>
+
+        <!-- ===== TRANSACTIONS ===== -->
+        <section id="section-transactions" class="section">
+            <div class="recurring-section" id="recurring-section">
+                <div class="card-section-header">
+                    <h3>🔄 Recorrências Ativas</h3>
+                    <button class="btn btn-sm btn-secondary" id="btn-toggle-recurring"><i data-lucide="chevron-down"></i></button>
+                </div>
+                <div class="recurring-list" id="recurring-list"></div>
+            </div>
+            <div class="transactions-toolbar">
+                <div class="search-box"><i data-lucide="search"></i><input type="text" placeholder="Buscar transações..." id="search-input"></div>
+                <div class="filter-group">
+                    <select id="filter-type" class="filter-select">
+                        <option value="all">Todos os tipos</option>
+                        <option value="income">Receitas</option>
+                        <option value="expense">Despesas</option>
+                    </select>
+                    <select id="filter-category" class="filter-select"><option value="all">Todas as categorias</option></select>
+                </div>
+            </div>
+            <div class="transactions-table-wrapper">
+                <table class="transactions-table" id="transactions-table">
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th></th></tr></thead>
+                    <tbody id="transactions-tbody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state hidden" id="empty-transactions"><i data-lucide="inbox"></i><p>Nenhuma transação encontrada</p></div>
+        </section>
+
+        <!-- ===== BUDGET ===== -->
+        <section id="section-budget" class="section">
+            <div class="budget-header">
+                <p class="budget-description">Defina limites de gastos mensais e diários para cada categoria.</p>
+                <button class="btn btn-secondary" id="btn-set-budget"><i data-lucide="settings"></i><span>Configurar Orçamentos</span></button>
+            </div>
+            <div class="budget-grid" id="budget-grid"></div>
+        </section>
+
+        <!-- ===== CATEGORIES ===== -->
+        <section id="section-categories" class="section">
+            <div class="categories-header">
+                <h3>Categorias de Receita</h3>
+                <button class="btn btn-primary btn-sm" id="btn-add-income-cat"><i data-lucide="plus"></i><span>Adicionar</span></button>
+            </div>
+            <div class="categories-grid" id="categories-grid-income"></div>
+            <div class="categories-header" style="margin-top:32px">
+                <h3>Categorias de Despesa</h3>
+                <button class="btn btn-primary btn-sm" id="btn-add-expense-cat"><i data-lucide="plus"></i><span>Adicionar</span></button>
+            </div>
+            <div class="categories-grid" id="categories-grid-expense"></div>
+        </section>
+
+        <!-- ===== BANKS ===== -->
+        <section id="section-banks" class="section">
+            <div class="categories-header">
+                <h3>Minhas Contas</h3>
+                <button class="btn btn-primary btn-sm" id="btn-add-bank"><i data-lucide="plus"></i><span>Adicionar</span></button>
+            </div>
+            <div class="categories-grid" id="banks-grid"></div>
+        </section>
+
+        <!-- ===== VISÃO MENSAL ===== -->
+        <section id="section-projection" class="section">
+            <div class="projection-controls">
+                <p class="projection-info" id="projection-info-text">Mostrando dados reais e projeção do mês selecionado</p>
+            </div>
+            <div class="projection-summary" id="projection-summary"></div>
+            <div class="projection-table-wrapper">
+                <table class="projection-table" id="projection-table">
+                    <thead><tr>
+                        <th>Data</th><th>Receitas</th><th>Desp. Recorrentes</th><th>Gastos Diários</th><th>Orç. Mensal</th><th>Total Dia</th><th>Saldo</th>
+                    </tr></thead>
+                    <tbody id="projection-tbody"></tbody>
+                </table>
+            </div>
+            <div class="chart-card chart-full" style="margin-top:20px">
+                <div class="chart-card-header"><h3>Curva do Saldo (Real + Projetado)</h3><span class="chart-subtitle" id="proj-chart-subtitle">Mês selecionado</span></div>
+                <div class="chart-wrapper"><canvas id="chart-projection"></canvas></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Transaction Modal -->
+    <div class="modal-overlay" id="transaction-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nova Transação</h3>
+                <button class="modal-close" id="btn-close-transaction-modal"><i data-lucide="x"></i></button>
+            </div>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <div class="type-toggle">
+                        <button type="button" class="type-btn active" data-type="expense" id="type-btn-expense"><i data-lucide="arrow-down-circle"></i> Despesa</button>
+                        <button type="button" class="type-btn" data-type="income" id="type-btn-income"><i data-lucide="arrow-up-circle"></i> Receita</button>
+                    </div>
+                    <input type="hidden" id="tx-type" value="expense">
+                </div>
+                <div class="form-row">
+                        <div class="form-group">
+                            <label for="tx-amount">Valor (R$)</label>
+                            <input type="number" id="tx-amount" class="form-control amount-input" placeholder="0.00" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tx-date">Data</label>
+                            <input type="date" id="tx-date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tx-category">Categoria</label>
+                            <select id="tx-category" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tx-bank">Conta / Banco</label>
+                            <select id="tx-bank" class="form-control"></select>
+                        </div>
+                    </div>
+                <div class="form-group">
+                    <label for="tx-description">Descrição</label>
+                    <input type="text" id="tx-description" placeholder="Ex: Supermercado, Salário..." required>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="tx-recurring-toggle">
+                        <span class="toggle-switch"></span>
+                        <span>Transação recorrente</span>
+                    </label>
+                </div>
+                <div class="recurring-fields hidden" id="recurring-fields">
+                    <div class="form-group">
+                        <label for="tx-frequency">Frequência</label>
+                        <select id="tx-frequency">
+                            <option value="daily">Diário</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="biweekly">Quinzenal</option>
+                            <option value="monthly" selected>Mensal</option>
+                            <option value="yearly">Anual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-end-date">Data de término (opcional)</label>
+                        <input type="date" id="tx-end-date">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="btn-submit-transaction">
+                    <i data-lucide="check"></i><span>Salvar Transação</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Budget Modal -->
+    <div class="modal-overlay" id="budget-modal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3>Configurar Orçamentos</h3>
+                <button class="modal-close" id="btn-close-budget-modal"><i data-lucide="x"></i></button>
+            </div>
+            <form id="budget-form">
+                <div class="budget-form-list" id="budget-form-list"></div>
+                <button type="submit" class="btn btn-primary btn-block" id="btn-submit-budget">
+                    <i data-lucide="check"></i><span>Salvar Orçamentos</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal-overlay" id="category-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nova Categoria</h3>
+                <button class="modal-close" id="btn-close-category-modal"><i data-lucide="x"></i></button>
+            </div>
+            <form id="category-form">
+                <input type="hidden" id="cat-type" value="expense">
+                <div class="form-group">
+                    <label for="cat-name">Nome</label>
+                    <input type="text" id="cat-name" placeholder="Nome da categoria" required>
+                </div>
+                <div class="form-group">
+                    <label>Cor</label>
+                        <div class="color-picker" id="color-picker"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ícone</label>
+                        <div class="icon-picker" id="icon-picker"></div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn btn-primary" style="width:100%">Salvar Categoria</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Modal -->
+    <div class="modal-overlay" id="bank-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nova Conta Bancária</h3>
+                <button class="close-modal" onclick="closeModal('bank-modal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="bank-form">
+                    <div class="form-group">
+                        <label for="bank-name">Nome da Conta</label>
+                        <input type="text" id="bank-name" class="form-control" placeholder="Ex: Nubank, Itaú..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bank-balance">Saldo Inicial (R$)</label>
+                        <input type="number" id="bank-balance" class="form-control" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Cor</label>
+                        <div class="color-picker" id="bank-color-picker"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ícone</label>
+                        <div class="icon-picker" id="bank-icon-picker"></div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn btn-primary" style="width:100%">Salvar Conta</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="app.js"></script>
+    <script src="charts.js"></script>
+</body>
+</html>
