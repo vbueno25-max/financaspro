@@ -176,7 +176,7 @@ function migrateOldBudgets(budgets, dailyLimits) {
 }
 
 // ===== CATEGORIES CRUD =====
-function addCategory(type, data) {
+async function addCategory(type, data) {
     const id = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + generateId().slice(0, 4);
     const cat = { id, name: data.name, icon: data.icon, color: data.color };
     state.categories[type].push(cat);
@@ -184,9 +184,11 @@ function addCategory(type, data) {
     saveState();
     refreshAll();
     showToast(`Categoria "${data.name}" criada!`, 'success');
+    const { error } = await sb.from('categories').insert([{ id: cat.id, type, name: cat.name, icon: cat.icon, color: cat.color }]);
+    if (error) { alert('Erro ao salvar categoria na nuvem: ' + error.message); console.error(error); }
 }
 
-function deleteCategory(id) {
+async function deleteCategory(id) {
     const hasTx = state.transactions.some(t => t.category === id);
     const hasRec = state.recurring.some(r => r.category === id);
     if (hasTx || hasRec) {
@@ -200,19 +202,23 @@ function deleteCategory(id) {
     saveState();
     refreshAll();
     showToast('Categoria removida.', 'info');
+    const { error } = await sb.from('categories').delete().eq('id', id);
+    if (error) { alert('Erro ao excluir categoria na nuvem: ' + error.message); console.error(error); }
 }
 
 // ===== BANKS CRUD =====
-function addBank(data) {
+async function addBank(data) {
     const id = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + generateId().slice(0, 4);
     const bank = { id, name: data.name, icon: data.icon, color: data.color, initialBalance: parseFloat(data.initialBalance) || 0 };
     state.banks.push(bank);
     saveState();
     refreshAll();
     showToast(`Conta "${data.name}" criada!`, 'success');
+    const { error } = await sb.from('banks').insert([{ id: bank.id, name: bank.name, icon: bank.icon, color: bank.color, initial_balance: bank.initialBalance }]);
+    if (error) { alert('Erro ao salvar conta na nuvem: ' + error.message); console.error(error); }
 }
 
-function deleteBank(id) {
+async function deleteBank(id) {
     const hasTx = state.transactions.some(t => t.bankId === id);
     const hasRec = state.recurring.some(r => r.bankId === id);
     if (hasTx || hasRec) {
@@ -223,6 +229,8 @@ function deleteBank(id) {
     saveState();
     refreshAll();
     showToast('Conta removida.', 'info');
+    const { error } = await sb.from('banks').delete().eq('id', id);
+    if (error) { alert('Erro ao excluir conta na nuvem: ' + error.message); console.error(error); }
 }
 
 // ===== RECURRING ENGINE =====
