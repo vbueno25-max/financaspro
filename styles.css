@@ -328,7 +328,7 @@ table{border-collapse:collapse;width:100%}
 /* --- Toggle Switch --- */
 .toggle-label{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:0.9rem;font-weight:500}
 .toggle-label input[type=checkbox]{display:none}
-.toggle-switch{width:44px;height:24px;border-radius:12px;background:var(--bg-input);border:1px solid var(--border);position:relative;transition:all var(--transition);flex-shrink:0}
+.toggle-switch{display:block;width:44px;height:24px;border-radius:12px;background:var(--bg-input);border:1px solid var(--border);position:relative;transition:all var(--transition);flex-shrink:0}
 .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--text-muted);transition:all var(--transition)}
 input[type=checkbox]:checked+.toggle-switch{background:rgba(var(--accent-rgb),0.3);border-color:var(--accent)}
 input[type=checkbox]:checked+.toggle-switch::after{left:calc(100% - 20px);background:var(--accent)}
