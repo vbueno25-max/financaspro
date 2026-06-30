@@ -316,7 +316,7 @@ table{border-collapse:collapse;width:100%}
 .modal-overlay.open{display:flex}
 .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);width:90%;max-width:500px;max-height:85vh;overflow-y:auto;transform:scale(0.95);opacity:0;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);box-shadow:var(--shadow-lg);backdrop-filter:blur(16px)}
 .modal-wide{max-width:800px}
-.modal.open{transform:scale(1);opacity:1}
+.modal-overlay.open .modal{transform:scale(1);opacity:1}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .modal-header h3{font-size:1.15rem}
 .modal-close{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;transition:all var(--transition);color:var(--text-muted)}

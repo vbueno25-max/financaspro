@@ -1676,6 +1676,7 @@ function resetTransactionForm() {
 
 // ===== INIT =====
 async function init() {
+    lucide.createIcons(); // Render static icons immediately
     await loadState();
 
     // First visit: use defaults
