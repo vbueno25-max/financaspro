@@ -301,7 +301,7 @@ function openInvestmentTxModal(invId) {
     document.getElementById('inv-tx-asset-id').value = invId;
     document.getElementById('inv-tx-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('inv-tx-amount').value = '';
-    document.getElementById('inv-tx-modal').classList.add('active');
+    document.getElementById('inv-tx-modal').classList.add('open');
 }
 
 async function addInvestmentTx(e) {
@@ -1447,7 +1447,7 @@ function initEventListeners() {
         document.getElementById('inv-class').value = 'Renda Fixa';
         document.getElementById('inv-class-fixa').classList.add('active');
         document.getElementById('inv-class-var').classList.remove('active');
-        document.getElementById('investment-modal').classList.add('active');
+        document.getElementById('investment-modal').classList.add('open');
     });
     
     const invForm = document.getElementById('investment-form');
