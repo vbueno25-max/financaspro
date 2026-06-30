@@ -246,7 +246,7 @@
             <div class="categories-header" style="margin-top: 32px;">
                 <h3>Meus Ativos</h3>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-sm" id="btn-rebalance" style="background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border);"><i data-lucide="target"></i><span>Onde Investir?</span></button>
+                    <button class="btn btn-sm btn-outline" id="btn-rebalance"><i data-lucide="target"></i><span>Onde Investir?</span></button>
                     <button class="btn btn-primary btn-sm" id="btn-add-investment"><i data-lucide="plus"></i><span>Novo Ativo</span></button>
                 </div>
             </div>
@@ -344,10 +344,11 @@
     <div class="modal-overlay" id="category-modal">
         <div class="modal">
             <div class="modal-header">
-                <h3>Nova Categoria</h3>
-                <button class="modal-close" id="btn-close-category-modal"><i data-lucide="x"></i></button>
+                <h3 id="category-modal-title">Nova Categoria</h3>
+                <button class="close-modal" aria-label="Fechar" onclick="closeModal('category-modal')"><i data-lucide="x"></i></button>
             </div>
-            <form id="category-form">
+            <div class="modal-body">
+                <form id="category-form">
                 <input type="hidden" id="cat-type" value="expense">
                 <div class="form-group">
                     <label for="cat-name">Nome</label>
@@ -372,7 +373,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3>Nova Conta Bancária</h3>
-                <button class="close-modal" onclick="closeModal('bank-modal')"><i data-lucide="x"></i></button>
+                <button class="close-modal" aria-label="Fechar" onclick="closeModal('bank-modal')"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
                 <form id="bank-form">
@@ -405,7 +406,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3>Novo Ativo</h3>
-                <button class="close-modal" onclick="closeModal('investment-modal')"><i data-lucide="x"></i></button>
+                <button class="close-modal" aria-label="Fechar" onclick="closeModal('investment-modal')"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
                 <form id="investment-form">
@@ -483,7 +484,7 @@
         <div class="modal modal-wide">
             <div class="modal-header">
                 <h3 id="inv-details-title">Análise do Ativo</h3>
-                <button class="close-modal" onclick="closeModal('inv-details-modal')"><i data-lucide="x"></i></button>
+                <button class="close-modal" aria-label="Fechar" onclick="closeModal('inv-details-modal')"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="dashboard-charts" style="margin-bottom: 24px;">
@@ -500,8 +501,8 @@
                 <div class="categories-header">
                     <h3>Histórico de Movimentações</h3>
                 </div>
-                <div style="max-height: 250px; overflow-y: auto; margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <div style="overflow-x: auto; margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px;">
+                    <table style="width: 100%; min-width: 400px; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--border); color: var(--text-secondary);">
                                 <th style="padding: 8px;">Data</th>
