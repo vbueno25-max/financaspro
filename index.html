@@ -471,6 +471,47 @@
         </div>
     </div>
 
+    <!-- Investment Details Modal -->
+    <div class="modal-overlay" id="inv-details-modal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h3 id="inv-details-title">Análise do Ativo</h3>
+                <button class="close-modal" onclick="closeModal('inv-details-modal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="dashboard-charts" style="margin-bottom: 24px;">
+                    <div class="chart-card">
+                        <div class="chart-card-header"><h3>Desempenho Acumulado</h3></div>
+                        <div class="chart-wrapper"><canvas id="chart-inv-perf"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header"><h3>Evolução do Saldo</h3></div>
+                        <div class="chart-wrapper"><canvas id="chart-inv-evo"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="categories-header">
+                    <h3>Histórico de Movimentações</h3>
+                </div>
+                <div style="max-height: 250px; overflow-y: auto; margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border); color: var(--text-secondary);">
+                                <th style="padding: 8px;">Data</th>
+                                <th style="padding: 8px;">Tipo</th>
+                                <th style="padding: 8px; text-align: right;">Valor</th>
+                                <th style="padding: 8px; text-align: center;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-details-history">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script src="charts.js"></script>
 </body>

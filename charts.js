@@ -291,3 +291,89 @@ function renderInvestmentsCharts() {
     }
 }
 
+
+function renderInvestmentDetailsCharts(inv, txs) {
+    let aportes = 0, retiradas = 0, rendimentos = 0, perdas = 0;
+    txs.forEach(t => {
+        if(t.type === 'aporte') aportes += t.amount;
+        if(t.type === 'retirada') retiradas += t.amount;
+        if(t.type === 'rendimento') rendimentos += t.amount;
+        if(t.type === 'perda') perdas += t.amount;
+    });
+
+    const perfCanvas = document.getElementById('chart-inv-perf');
+    if (perfCanvas) {
+        if (window.invPerfChart) window.invPerfChart.destroy();
+        window.invPerfChart = new Chart(perfCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Aportes', 'Retiradas', 'Rendimentos', 'Perdas'],
+                datasets: [{
+                    data: [aportes, retiradas, rendimentos, perdas],
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981', '#ef4444'],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false, drawBorder: false }, ticks: { color: '#64748b', font: { family: 'Inter' } } },
+                    y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#64748b', font: { family: 'Inter' }, callback: v => 'R$ ' + v } }
+                }
+            }
+        });
+    }
+
+    const evoCanvas = document.getElementById('chart-inv-evo');
+    if (evoCanvas) {
+        if (window.invEvoDetailsChart) window.invEvoDetailsChart.destroy();
+        
+        const sortedTxs = [...txs].sort((a,b) => new Date(a.date) - new Date(b.date));
+        const monthTotals = {};
+        let runningTotal = 0;
+        
+        sortedTxs.forEach(t => {
+            const m = t.date.substring(0, 7);
+            runningTotal += (t.type === 'aporte' || t.type === 'rendimento') ? t.amount : -t.amount;
+            monthTotals[m] = runningTotal;
+        });
+        
+        const labels = Object.keys(monthTotals);
+        const data = labels.map(m => monthTotals[m]);
+
+        window.invEvoDetailsChart = new Chart(evoCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels.map(m => {
+                    const d = new Date(m + '-01T00:00:00');
+                    return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+                }),
+                datasets: [{
+                    label: 'Saldo',
+                    data: data,
+                    borderColor: inv.color,
+                    backgroundColor: inv.color + '1a',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: inv.color,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false, drawBorder: false }, ticks: { color: '#64748b', font: { family: 'Inter' } } },
+                    y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#64748b', font: { family: 'Inter' }, callback: v => 'R$ ' + v } }
+                }
+            }
+        });
+    }
+}

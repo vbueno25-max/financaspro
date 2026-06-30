@@ -245,6 +245,7 @@ function renderInvestmentsPage() {
             </div>
             <div class="cat-actions" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: flex; justify-content: space-between;">
                 <button class="btn btn-sm btn-primary" onclick="openInvestmentTxModal('${inv.id}')" style="flex: 1; margin-right: 8px;">Atualizar</button>
+                <button class="btn btn-sm" onclick="openInvestmentDetailsModal('${inv.id}')" style="background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); flex: 1; margin-right: 8px;">Analisar</button>
                 <button class="category-delete-btn" onclick="deleteInvestment('${inv.id}')" title="Excluir"><i data-lucide="trash-2"></i></button>
             </div>
         </div>`;
@@ -323,6 +324,65 @@ async function addInvestmentTx(e) {
         id: tx.id, investment_id: tx.investmentId, date: tx.date, type: tx.type, amount: tx.amount
     }]);
     if(error) alert('Erro ao salvar atualização na nuvem: ' + error.message);
+}
+
+function openInvestmentDetailsModal(invId) {
+    const inv = state.investments.find(i => i.id === invId);
+    if (!inv) return;
+    
+    document.getElementById('inv-details-title').textContent = `Análise: ${inv.name}`;
+    
+    // Sort transactions latest first
+    const txs = state.investment_transactions.filter(t => t.investmentId === invId).sort((a,b) => new Date(b.date) - new Date(a.date));
+    
+    const tbody = document.getElementById('inv-details-history');
+    if (txs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 16px; color: var(--text-muted);">Nenhuma movimentação registrada.</td></tr>';
+    } else {
+        tbody.innerHTML = txs.map(t => {
+            const d = new Date(t.date + 'T00:00:00');
+            const dateStr = d.toLocaleDateString('pt-BR');
+            let color = 'var(--text-primary)';
+            if(t.type === 'aporte') color = 'var(--primary)';
+            if(t.type === 'rendimento') color = 'var(--income)';
+            if(t.type === 'retirada') color = 'var(--accent)';
+            if(t.type === 'perda') color = 'var(--expense)';
+            
+            const typeLabels = { aporte: 'Aporte', rendimento: 'Rendimento', retirada: 'Retirada', perda: 'Perda' };
+            
+            return `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 12px 8px;">${dateStr}</td>
+                <td style="padding: 12px 8px; color: ${color}; text-transform: capitalize;">${typeLabels[t.type] || t.type}</td>
+                <td style="padding: 12px 8px; text-align: right; font-weight: 500;">${formatCurrency(t.amount)}</td>
+                <td style="padding: 12px 8px; text-align: center;">
+                    <button class="category-delete-btn" onclick="deleteInvestmentTx('${t.id}', '${invId}')" title="Excluir Histórico"><i data-lucide="trash-2"></i></button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+    
+    lucide.createIcons({ nodes: [tbody] });
+    document.getElementById('inv-details-modal').classList.add('open');
+    
+    // Render individual charts
+    if (typeof renderInvestmentDetailsCharts === 'function') {
+        renderInvestmentDetailsCharts(inv, txs);
+    }
+}
+
+async function deleteInvestmentTx(txId, invId) {
+    if(!confirm('Tem certeza que deseja excluir esta movimentação? O saldo do ativo será recalculado.')) return;
+    state.investment_transactions = state.investment_transactions.filter(t => t.id !== txId);
+    
+    // Refresh views
+    openInvestmentDetailsModal(invId);
+    renderInvestmentsPage();
+    
+    showToast('Movimentação excluída.', 'info');
+    
+    const { error } = await sb.from('investment_transactions').delete().eq('id', txId);
+    if(error) alert('Erro ao excluir na nuvem: ' + error.message);
 }
 
 // ===== CATEGORIES CRUD =====
