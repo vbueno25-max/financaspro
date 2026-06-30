@@ -290,7 +290,10 @@ async function addInvestment(e) {
         id: inv.id, name: inv.name, broker: inv.broker, class: inv.class, type: inv.type,
         yield_rate: inv.yieldRate, target_percent: inv.targetPercent, color: inv.color, icon: inv.icon
     }]);
-    if(error) alert('Erro ao salvar investimento na nuvem: ' + error.message);
+    if(error) {
+        alert('Erro ao salvar investimento na nuvem: ' + error.message);
+        loadDataFromSupabase(); // Rollback local state
+    }
 }
 
 async function deleteInvestment(id) {
@@ -417,8 +420,8 @@ async function saveEditedInvestment(e) {
 }
 
 function calculateRebalance() {
-    const amount = parseFloat(document.getElementById('rebalance-amount').value || 0);
-    if (amount <= 0) return;
+    const amount = parseFloat(document.getElementById('rebalance-amount').value);
+    if (isNaN(amount) || amount <= 0) return;
     
     // Calculate current balances
     const balances = {};
@@ -755,6 +758,18 @@ function calculateTimeline() {
                     }
                 }
             });
+
+            // Fix: Include manual future transactions scheduled for this date
+            state.transactions.filter(t => t.date === dateStr).forEach(tx => {
+                if (tx.type === 'income') {
+                    income += tx.amount;
+                    incomeItems.push({ name: tx.description + ' (Agendado)', amount: tx.amount });
+                } else {
+                    recurringExpense += tx.amount; // Treating non-budget manual future tx as fixed expense for projection
+                    expenseItems.push({ name: tx.description + ' (Agendado)', amount: tx.amount });
+                }
+            });
+
             dailySpending = expectedDailyLimit;
             monthlySpending = expectedMonthlyLimit;
         } else {
