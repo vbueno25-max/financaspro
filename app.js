@@ -1,5 +1,5 @@
-﻿/* ============================================
-   FinanÃ§asPro v2 â€” Main Application Logic
+/* ============================================
+   FinançasPro v2 — Main Application Logic
    ============================================ */
 const SUPABASE_URL = 'https://bptshsgdlsbhmyxvyoza.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdHNoc2dkbHNiaG15eHZ5b3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NDUyMTMsImV4cCI6MjA5ODMyMTIxM30.bItBv4g589ePvFDDANRoN_udN5m2FQednlNdBwzcBGM';
@@ -21,22 +21,22 @@ const COLOR_POOL = [
 ];
 const DEFAULT_CATEGORIES = {
     income: [
-        { id: 'salary', name: 'SalÃ¡rio', icon: 'briefcase', color: '#10b981' },
+        { id: 'salary', name: 'Salário', icon: 'briefcase', color: '#10b981' },
         { id: 'freelance', name: 'Freelance', icon: 'laptop', color: '#06b6d4' },
         { id: 'investments', name: 'Investimentos', icon: 'trending-up', color: '#8b5cf6' },
         { id: 'other-income', name: 'Outros', icon: 'plus-circle', color: '#6366f1' }
     ],
     expense: [
-        { id: 'food', name: 'AlimentaÃ§Ã£o', icon: 'utensils', color: '#f59e0b' },
+        { id: 'food', name: 'Alimentação', icon: 'utensils', color: '#f59e0b' },
         { id: 'housing', name: 'Moradia', icon: 'home', color: '#ef4444' },
         { id: 'transport', name: 'Transporte', icon: 'car', color: '#3b82f6' },
-        { id: 'health', name: 'SaÃºde', icon: 'heart', color: '#ec4899' },
-        { id: 'education', name: 'EducaÃ§Ã£o', icon: 'book-open', color: '#14b8a6' },
+        { id: 'health', name: 'Saúde', icon: 'heart', color: '#ec4899' },
+        { id: 'education', name: 'Educação', icon: 'book-open', color: '#14b8a6' },
         { id: 'leisure', name: 'Lazer', icon: 'gamepad-2', color: '#a855f7' },
         { id: 'other-expense', name: 'Outros', icon: 'shopping-bag', color: '#64748b' }
     ]
 };
-const FREQ_LABELS = { daily:'DiÃ¡rio', weekly:'Semanal', biweekly:'Quinzenal', monthly:'Mensal', yearly:'Anual' };
+const FREQ_LABELS = { daily:'Diário', weekly:'Semanal', biweekly:'Quinzenal', monthly:'Mensal', yearly:'Anual' };
 
 // ===== STATE =====
 const state = {
@@ -234,8 +234,8 @@ function renderInvestmentsPage() {
                     <h4 style="margin-bottom: 2px;">${inv.name}</h4>
                     <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">${inv.broker} | ${inv.type}</span>
                     <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                        <span style="font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">ðŸŽ¯ Alvo: ${inv.targetPercent || 0}%</span>
-                        ${inv.yieldRate ? `<span style="font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">ðŸ“ˆ ${inv.yieldRate}</span>` : ''}
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">🎯 Alvo: ${inv.targetPercent || 0}%</span>
+                        ${inv.yieldRate ? `<span style="font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">📈 ${inv.yieldRate}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -268,7 +268,7 @@ function renderInvestmentsPage() {
 
 async function addInvestment(e) {
     e.preventDefault();
-    const isVar = document.getElementById('inv-class').value === 'Renda VariÃ¡vel';
+    const isVar = document.getElementById('inv-class').value === 'Renda Variável';
     const inv = {
         id: generateId(),
         name: document.getElementById('inv-name').value,
@@ -290,18 +290,15 @@ async function addInvestment(e) {
         id: inv.id, name: inv.name, broker: inv.broker, class: inv.class, type: inv.type,
         yield_rate: inv.yieldRate, target_percent: inv.targetPercent, color: inv.color, icon: inv.icon
     }]);
-    if(error) {
-        alert('Erro ao salvar investimento na nuvem: ' + error.message);
-        loadDataFromSupabase(); // Rollback local state
-    }
+    if(error) alert('Erro ao salvar investimento na nuvem: ' + error.message);
 }
 
 async function deleteInvestment(id) {
-    if(!confirm('Excluir este investimento? Todo o histÃ³rico de movimentaÃ§Ãµes dele serÃ¡ perdido.')) return;
+    if(!confirm('Excluir este investimento? Todo o histórico de movimentações dele será perdido.')) return;
     state.investments = state.investments.filter(i => i.id !== id);
     state.investment_transactions = state.investment_transactions.filter(t => t.investmentId !== id);
     renderInvestmentsPage();
-    showToast('Investimento excluÃ­do.', 'info');
+    showToast('Investimento excluído.', 'info');
     
     const { error } = await sb.from('investments').delete().eq('id', id);
     if(error) alert('Erro ao excluir na nuvem: ' + error.message);
@@ -327,26 +324,26 @@ async function addInvestmentTx(e) {
     state.investment_transactions.push(tx);
     renderInvestmentsPage();
     closeModal('inv-tx-modal');
-    showToast('AtualizaÃ§Ã£o registrada.', 'success');
+    showToast('Atualização registrada.', 'success');
     
     const { error } = await sb.from('investment_transactions').insert([{
         id: tx.id, investment_id: tx.investmentId, date: tx.date, type: tx.type, amount: tx.amount
     }]);
-    if(error) alert('Erro ao salvar atualizaÃ§Ã£o na nuvem: ' + error.message);
+    if(error) alert('Erro ao salvar atualização na nuvem: ' + error.message);
 }
 
 function openInvestmentDetailsModal(invId) {
     const inv = state.investments.find(i => i.id === invId);
     if (!inv) return;
     
-    document.getElementById('inv-details-title').textContent = `AnÃ¡lise: ${inv.name}`;
+    document.getElementById('inv-details-title').textContent = `Análise: ${inv.name}`;
     
     // Sort transactions latest first
     const txs = state.investment_transactions.filter(t => t.investmentId === invId).sort((a,b) => new Date(b.date) - new Date(a.date));
     
     const tbody = document.getElementById('inv-details-history');
     if (txs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 16px; color: var(--text-muted);">Nenhuma movimentaÃ§Ã£o registrada.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 16px; color: var(--text-muted);">Nenhuma movimentação registrada.</td></tr>';
     } else {
         tbody.innerHTML = txs.map(t => {
             const d = new Date(t.date + 'T00:00:00');
@@ -365,7 +362,7 @@ function openInvestmentDetailsModal(invId) {
                 <td style="padding: 12px 8px; color: ${color}; text-transform: capitalize;">${typeLabels[t.type] || t.type}</td>
                 <td style="padding: 12px 8px; text-align: right; font-weight: 500;">${formatCurrency(t.amount)}</td>
                 <td style="padding: 12px 8px; text-align: center;">
-                    <button class="category-delete-btn" onclick="deleteInvestmentTx('${t.id}', '${invId}')" title="Excluir HistÃ³rico"><i data-lucide="trash-2"></i></button>
+                    <button class="category-delete-btn" onclick="deleteInvestmentTx('${t.id}', '${invId}')" title="Excluir Histórico"><i data-lucide="trash-2"></i></button>
                 </td>
             </tr>`;
         }).join('');
@@ -381,14 +378,14 @@ function openInvestmentDetailsModal(invId) {
 }
 
 async function deleteInvestmentTx(txId, invId) {
-    if(!confirm('Tem certeza que deseja excluir esta movimentaÃ§Ã£o? O saldo do ativo serÃ¡ recalculado.')) return;
+    if(!confirm('Tem certeza que deseja excluir esta movimentação? O saldo do ativo será recalculado.')) return;
     state.investment_transactions = state.investment_transactions.filter(t => t.id !== txId);
     
     // Refresh views
     openInvestmentDetailsModal(invId);
     renderInvestmentsPage();
     
-    showToast('MovimentaÃ§Ã£o excluÃ­da.', 'info');
+    showToast('Movimentação excluída.', 'info');
     
     const { error } = await sb.from('investment_transactions').delete().eq('id', txId);
     if(error) alert('Erro ao excluir na nuvem: ' + error.message);
@@ -420,8 +417,8 @@ async function saveEditedInvestment(e) {
 }
 
 function calculateRebalance() {
-    const amount = parseFloat(document.getElementById('rebalance-amount').value);
-    if (isNaN(amount) || amount <= 0) return;
+    const amount = parseFloat(document.getElementById('rebalance-amount').value || 0);
+    if (amount <= 0) return;
     
     // Calculate current balances
     const balances = {};
@@ -459,7 +456,7 @@ function calculateRebalance() {
     const list = document.getElementById('rebalance-list');
     
     if (totalDeficit <= 0 || recommendations.length === 0) {
-        list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">Sua carteira jÃ¡ estÃ¡ balanceada, ou o aporte Ã© muito pequeno para recalcular.</div>';
+        list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">Sua carteira já está balanceada, ou o aporte é muito pequeno para recalcular.</div>';
     } else {
         // Distribute `amount` proportionally to the deficits
         let allocHtml = '';
@@ -500,7 +497,7 @@ async function deleteCategory(id) {
     const hasTx = state.transactions.some(t => t.category === id);
     const hasRec = state.recurring.some(r => r.category === id);
     if (hasTx || hasRec) {
-        showToast('NÃ£o Ã© possÃ­vel excluir: existem transaÃ§Ãµes vinculadas.', 'error');
+        showToast('Não é possível excluir: existem transações vinculadas.', 'error');
         return;
     }
     state.categories.income = state.categories.income.filter(c => c.id !== id);
@@ -527,11 +524,11 @@ async function addBank(data) {
 }
 
 async function deleteBank(id) {
-    if (!confirm('Tem certeza que deseja excluir esta conta bancÃ¡ria?')) return;
+    if (!confirm('Tem certeza que deseja excluir esta conta bancária?')) return;
     const hasTx = state.transactions.some(t => t.bankId === id);
     const hasRec = state.recurring.some(r => r.bankId === id);
     if (hasTx || hasRec) {
-        showToast('Existem transaÃ§Ãµes vinculadas a esta conta. Edite-as antes de remover.', 'error');
+        showToast('Existem transações vinculadas a esta conta. Edite-as antes de remover.', 'error');
         return;
     }
     state.banks = state.banks.filter(b => b.id !== id);
@@ -618,7 +615,7 @@ async function addRecurring(data) {
     generateRecurringTransactions();
     saveState();
     refreshAll();
-    showToast('RecorrÃªncia adicionada.', 'success');
+    showToast('Recorrência adicionada.', 'success');
     
     const sRec = {
         id: rec.id, type: rec.type, amount: rec.amount, category: rec.category,
@@ -626,21 +623,21 @@ async function addRecurring(data) {
         start_date: rec.startDate, end_date: rec.endDate, active: rec.active
     };
     const { error } = await sb.from('recurring').insert([sRec]);
-    if (error) { alert('Erro ao salvar recorrÃªncia na nuvem: ' + error.message); console.error(error); }
+    if (error) { alert('Erro ao salvar recorrência na nuvem: ' + error.message); console.error(error); }
 }
 
 async function deleteRecurring(id) {
-    if (!confirm('Excluir esta transaÃ§Ã£o recorrente? Isso tambÃ©m excluirÃ¡ todos os lanÃ§amentos futuros vinculados a ela.')) return;
+    if (!confirm('Excluir esta transação recorrente? Isso também excluirá todos os lançamentos futuros vinculados a ela.')) return;
     state.recurring = state.recurring.filter(r => r.id !== id);
     state.transactions = state.transactions.filter(t => !(t.recurringId === id && t.autoGenerated));
     saveState();
     refreshAll();
-    showToast('RecorrÃªncia removida.', 'info');
+    showToast('Recorrência removida.', 'info');
     
     // Also delete any auto-generated future transactions in Supabase for this recurring
     await sb.from('transactions').delete().match({ recurring_id: id, auto_generated: true }).catch(console.error);
     const { error } = await sb.from('recurring').delete().eq('id', id);
-    if (error) { alert('Erro ao excluir recorrÃªncia na nuvem: ' + error.message); console.error(error); }
+    if (error) { alert('Erro ao excluir recorrência na nuvem: ' + error.message); console.error(error); }
 }
 
 async function toggleRecurring(id) {
@@ -650,9 +647,9 @@ async function toggleRecurring(id) {
         if (rec.active) generateRecurringTransactions();
         saveState();
         refreshAll();
-        showToast(rec.active ? 'RecorrÃªncia ativada.' : 'RecorrÃªncia pausada.', 'info');
+        showToast(rec.active ? 'Recorrência ativada.' : 'Recorrência pausada.', 'info');
         const { error } = await sb.from('recurring').update({ active: rec.active }).eq('id', id);
-        if (error) { alert('Erro ao atualizar recorrÃªncia na nuvem: ' + error.message); console.error(error); }
+        if (error) { alert('Erro ao atualizar recorrência na nuvem: ' + error.message); console.error(error); }
     }
 }
 
@@ -758,18 +755,6 @@ function calculateTimeline() {
                     }
                 }
             });
-
-            // Fix: Include manual future transactions scheduled for this date
-            state.transactions.filter(t => t.date === dateStr).forEach(tx => {
-                if (tx.type === 'income') {
-                    income += tx.amount;
-                    incomeItems.push({ name: tx.description + ' (Agendado)', amount: tx.amount });
-                } else {
-                    recurringExpense += tx.amount; // Treating non-budget manual future tx as fixed expense for projection
-                    expenseItems.push({ name: tx.description + ' (Agendado)', amount: tx.amount });
-                }
-            });
-
             dailySpending = expectedDailyLimit;
             monthlySpending = expectedMonthlyLimit;
         } else {
@@ -831,7 +816,7 @@ async function addTransaction(data) {
     state.transactions.push(tx);
     saveState();
     refreshAll();
-    showToast('TransaÃ§Ã£o registrada!', 'success');
+    showToast('Transação registrada!', 'success');
     
     const sTx = {
         id: tx.id, 
@@ -852,11 +837,11 @@ async function addTransaction(data) {
 }
 
 async function deleteTransaction(id) {
-    if (!confirm('Excluir esta transaÃ§Ã£o?')) return;
+    if (!confirm('Excluir esta transação?')) return;
     state.transactions = state.transactions.filter(t => t.id !== id);
     saveState();
     refreshAll();
-    showToast('TransaÃ§Ã£o excluÃ­da.', 'info');
+    showToast('Transação excluída.', 'info');
     const { error } = await sb.from('transactions').delete().eq('id', id);
     if (error) {
         alert('Erro ao excluir na nuvem: ' + error.message);
@@ -868,7 +853,7 @@ function saveBudgets(budgets) {
     state.budgets = budgets;
     saveState();
     refreshAll();
-    showToast('OrÃ§amentos salvos!', 'success');
+    showToast('Orçamentos salvos!', 'success');
 }
 
 // ===== TOAST =====
@@ -929,7 +914,7 @@ function setBadge(id, pct, invert = false) {
     if (pct === null || pct === undefined || isNaN(pct)) { el.textContent = ''; el.className = 'card-badge'; return; }
     const r = Math.round(pct);
     const pos = invert ? r <= 0 : r >= 0;
-    el.textContent = `${r >= 0 ? 'â†‘' : 'â†“'} ${Math.abs(r)}%`;
+    el.textContent = `${r >= 0 ? '↑' : '↓'} ${Math.abs(r)}%`;
     el.className = `card-badge ${r === 0 ? 'neutral' : pos ? 'positive' : 'negative'}`;
 }
 
@@ -937,13 +922,13 @@ function setBadge(id, pct, invert = false) {
 function renderRecentTransactions() {
     const c = document.getElementById('recent-transactions-list');
     const txs = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)).slice(0, 7);
-    if (!txs.length) { c.innerHTML = '<div class="empty-state"><i data-lucide="inbox"></i><p>Nenhuma transaÃ§Ã£o ainda</p></div>'; lucide.createIcons({ nodes: [c] }); return; }
+    if (!txs.length) { c.innerHTML = '<div class="empty-state"><i data-lucide="inbox"></i><p>Nenhuma transação ainda</p></div>'; lucide.createIcons({ nodes: [c] }); return; }
     c.innerHTML = txs.map(tx => {
         const cat = getCategoryById(tx.category);
-        const badge = tx.autoGenerated ? '<span class="recurring-badge">ðŸ”„</span>' : '';
+        const badge = tx.autoGenerated ? '<span class="recurring-badge">🔄</span>' : '';
         return `<div class="tx-item">
             <div class="tx-icon" style="background:${cat.color}18;color:${cat.color}"><i data-lucide="${cat.icon}"></i></div>
-            <div class="tx-info"><div class="tx-desc">${tx.description}${badge}</div><div class="tx-meta">${cat.name} â€¢ ${formatDate(tx.date)}</div></div>
+            <div class="tx-info"><div class="tx-desc">${tx.description}${badge}</div><div class="tx-meta">${cat.name} • ${formatDate(tx.date)}</div></div>
             <div class="tx-amount ${tx.type}">${tx.type === 'income' ? '+' : '-'} ${formatCurrency(tx.amount)}</div>
         </div>`;
     }).join('');
@@ -971,7 +956,7 @@ function renderTransactionsPage() {
             bank = state.banks.find(b => normalizeString(b.name) === normBank);
         }
         const bankName = bank ? `<i data-lucide="${bank.icon}" style="width:14px;height:14px;margin-right:6px;color:${bank.color}"></i>${bank.name}` : '<span style="color:var(--text-muted)">-</span>';
-        const badge = tx.autoGenerated ? ' <span class="recurring-badge">ðŸ”„</span>' : '';
+        const badge = tx.autoGenerated ? ' <span class="recurring-badge">🔄</span>' : '';
         return `<tr>
             <td>${formatDate(tx.date)}</td>
             <td>${tx.description}${badge}</td>
@@ -987,7 +972,7 @@ function renderTransactionsPage() {
 // ===== RENDERING: Recurring List =====
 function renderRecurringList() {
     const list = document.getElementById('recurring-list');
-    if (!state.recurring.length) { list.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">Nenhuma recorrÃªncia cadastrada.</p>'; return; }
+    if (!state.recurring.length) { list.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">Nenhuma recorrência cadastrada.</p>'; return; }
     list.innerHTML = state.recurring.map(rec => {
         const cat = getCategoryById(rec.category);
         const startD = new Date(rec.startDate + 'T12:00:00');
@@ -997,7 +982,7 @@ function renderRecurringList() {
         return `<div class="tx-item${pausedClass}">
             <div class="tx-icon" style="background:${cat.color}18;color:${cat.color}"><i data-lucide="${cat.icon}"></i></div>
             <div class="tx-info"><div class="tx-desc">${rec.description}</div>
-            <div class="tx-meta">${cat.name} â€¢ ${FREQ_LABELS[rec.frequency]} â€¢ Desde ${startLabel}${rec.endDate ? ' atÃ© ' + formatDate(rec.endDate) : ''}${!rec.active ? ' â€¢ PAUSADA' : ''}</div></div>
+            <div class="tx-meta">${cat.name} • ${FREQ_LABELS[rec.frequency]} • Desde ${startLabel}${rec.endDate ? ' até ' + formatDate(rec.endDate) : ''}${!rec.active ? ' • PAUSADA' : ''}</div></div>
             <div class="tx-amount ${rec.type}">${rec.type === 'income' ? '+' : '-'} ${formatCurrency(rec.amount)}</div>
             <div class="recurring-actions">
                 <button class="pause-btn" onclick="toggleRecurring('${rec.id}')" title="${rec.active ? 'Pausar' : 'Ativar'}"><i data-lucide="${pauseIcon}"></i></button>
@@ -1024,11 +1009,11 @@ function renderBudgetPage() {
             const pct = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
             const overPct = limit > 0 ? (spent / limit) * 100 : 0;
             let statusClass = 'ok', statusText = `${Math.round(pct)}% utilizado`, barColor = cat.color;
-            if (!limit) { statusText = 'Sem orÃ§amento definido'; barColor = 'var(--text-muted)'; }
+            if (!limit) { statusText = 'Sem orçamento definido'; barColor = 'var(--text-muted)'; }
             else if (overPct > 100) { statusClass = 'over'; statusText = `Excedido em ${formatCurrency(spent - limit)}`; barColor = 'var(--expense)'; }
-            else if (overPct >= 80) { statusClass = 'warn'; statusText = `${Math.round(overPct)}% â€” AtenÃ§Ã£o!`; barColor = 'var(--warning)'; }
+            else if (overPct >= 80) { statusClass = 'warn'; statusText = `${Math.round(overPct)}% — Atenção!`; barColor = 'var(--warning)'; }
 
-            const distLabel = config.distribution === 'fixed' ? `Dia ${config.fixedDay || 1}` : 'DistribuÃ­do';
+            const distLabel = config.distribution === 'fixed' ? `Dia ${config.fixedDay || 1}` : 'Distribuído';
             return `<div class="budget-card">
                 <div class="budget-card-top">
                     <div class="budget-cat">
@@ -1037,7 +1022,7 @@ function renderBudgetPage() {
                     </div>
                     <div class="budget-values">
                         <div class="budget-spent">${formatCurrency(spent)}</div>
-                        <div class="budget-limit">${limit > 0 ? 'de ' + formatCurrency(limit) + ' (' + distLabel + ')' : 'â€”'}</div>
+                        <div class="budget-limit">${limit > 0 ? 'de ' + formatCurrency(limit) + ' (' + distLabel + ')' : '—'}</div>
                     </div>
                 </div>
                 <div class="budget-progress-track"><div class="budget-progress-bar" style="width:${pct}%;background:${barColor}"></div></div>
@@ -1052,9 +1037,9 @@ function renderBudgetPage() {
             const pct = monthlyEquivalent > 0 ? Math.min((spent / monthlyEquivalent) * 100, 100) : 0;
             const overPct = monthlyEquivalent > 0 ? (spent / monthlyEquivalent) * 100 : 0;
             let statusClass = 'ok', statusText = `${Math.round(pct)}% do previsto mensal`, barColor = cat.color;
-            if (!dailyLimit) { statusText = 'Sem orÃ§amento definido'; barColor = 'var(--text-muted)'; }
-            else if (overPct > 100) { statusClass = 'over'; statusText = `Excedeu a previsÃ£o do mÃªs em ${formatCurrency(spent - monthlyEquivalent)}`; barColor = 'var(--expense)'; }
-            else if (overPct >= 80) { statusClass = 'warn'; statusText = `${Math.round(overPct)}% do mÃªs â€” AtenÃ§Ã£o!`; barColor = 'var(--warning)'; }
+            if (!dailyLimit) { statusText = 'Sem orçamento definido'; barColor = 'var(--text-muted)'; }
+            else if (overPct > 100) { statusClass = 'over'; statusText = `Excedeu a previsão do mês em ${formatCurrency(spent - monthlyEquivalent)}`; barColor = 'var(--expense)'; }
+            else if (overPct >= 80) { statusClass = 'warn'; statusText = `${Math.round(overPct)}% do mês — Atenção!`; barColor = 'var(--warning)'; }
 
             // Today's tracking
             const todaySpent = todayExpenses[cat.id] || 0;
@@ -1070,11 +1055,11 @@ function renderBudgetPage() {
                 <div class="budget-card-top">
                     <div class="budget-cat">
                         <div class="budget-cat-icon" style="background:${cat.color}18;color:${cat.color}"><i data-lucide="${cat.icon}"></i></div>
-                        <span class="budget-cat-name">${cat.name} (DiÃ¡rio)</span>
+                        <span class="budget-cat-name">${cat.name} (Diário)</span>
                     </div>
                     <div class="budget-values">
                         <div class="budget-spent">${formatCurrency(spent)}</div>
-                        <div class="budget-limit">${monthlyEquivalent > 0 ? 'est. mensal: ' + formatCurrency(monthlyEquivalent) : 'â€”'}</div>
+                        <div class="budget-limit">${monthlyEquivalent > 0 ? 'est. mensal: ' + formatCurrency(monthlyEquivalent) : '—'}</div>
                     </div>
                 </div>
                 <div class="budget-progress-track"><div class="budget-progress-bar" style="width:${pct}%;background:${barColor}"></div></div>
@@ -1150,7 +1135,7 @@ function renderProjectionPage() {
     const summaryEl = document.getElementById('projection-summary');
 
     if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px">Nenhum dado para o mÃªs selecionado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px">Nenhum dado para o mês selecionado.</td></tr>';
         summaryEl.innerHTML = '';
         if (typeof updateAllCharts === 'function') updateAllCharts();
         return;
@@ -1162,8 +1147,8 @@ function renderProjectionPage() {
     const finalBalance = data[data.length - 1].balance;
 
     summaryEl.innerHTML = `
-        <div class="proj-summary-card"><p class="proj-summary-label">Saldo Inicial do MÃªs</p><p class="proj-summary-value">${formatCurrency(startBalance)}</p></div>
-        <div class="proj-summary-card ${finalBalance >= 0 ? 'positive' : 'negative'}"><p class="proj-summary-label">Saldo Final (MÃªs)</p><p class="proj-summary-value">${formatCurrency(finalBalance)}</p></div>
+        <div class="proj-summary-card"><p class="proj-summary-label">Saldo Inicial do Mês</p><p class="proj-summary-value">${formatCurrency(startBalance)}</p></div>
+        <div class="proj-summary-card ${finalBalance >= 0 ? 'positive' : 'negative'}"><p class="proj-summary-label">Saldo Final (Mês)</p><p class="proj-summary-value">${formatCurrency(finalBalance)}</p></div>
         <div class="proj-summary-card positive"><p class="proj-summary-label">Receitas Totais</p><p class="proj-summary-value">${formatCurrency(totalIncome)}</p></div>
         <div class="proj-summary-card negative"><p class="proj-summary-label">Despesas Totais</p><p class="proj-summary-value">${formatCurrency(totalExpense)}</p></div>
     `;
@@ -1183,19 +1168,19 @@ function renderProjectionPage() {
         const hasBreakdown = breakdownItems.length > 0;
 
         // Incomes
-        let incHtml = 'â€”';
+        let incHtml = '—';
         if (day.incomeItems.length > 0) {
             incHtml = day.incomeItems.map(i => `<div class="proj-income-val">+${formatCurrency(i.amount)} <span style="font-size:0.75em;color:var(--text-muted)">(${i.name})</span></div>`).join('');
         }
         
         // Recurring Expenses
-        let recExpHtml = 'â€”';
+        let recExpHtml = '—';
         if (day.expenseItems.length > 0) {
             recExpHtml = day.expenseItems.map(i => `<div class="proj-expense-val">-${formatCurrency(i.amount)} <span style="font-size:0.75em;color:var(--text-muted)">(${i.name})</span></div>`).join('');
         }
 
         // Daily
-        let dailyHtml = 'â€”';
+        let dailyHtml = '—';
         if (day.isFuture) {
             if (day.dailySpending > 0) dailyHtml = `<span class="proj-expense-val">-${formatCurrency(day.dailySpending)}</span>`;
         } else {
@@ -1206,7 +1191,7 @@ function renderProjectionPage() {
                 <span class="timeline-limit">/ ${formatCurrency(day.expectedDailyLimit)}</span>
             `;
             if (day.dailySpending > 0) {
-                dailyHtml = `<button class="expand-btn" data-day="daily-${idx}" onclick="toggleProjectionDetail('daily-${idx}')">â–¶</button>` + dailyHtml;
+                dailyHtml = `<button class="expand-btn" data-day="daily-${idx}" onclick="toggleProjectionDetail('daily-${idx}')">▶</button>` + dailyHtml;
             }
         }
 
@@ -1220,13 +1205,13 @@ function renderProjectionPage() {
         const hasDailyBreakdown = dailyBreakdownItems.length > 0;
 
         // Monthly
-        let monthlyHtml = 'â€”';
+        let monthlyHtml = '—';
         if (day.isFuture) {
             if (day.monthlySpending > 0) {
-                monthlyHtml = `<button class="expand-btn" data-day="${idx}" onclick="toggleProjectionDetail(${idx})">â–¶</button><span class="proj-expense-val">-${formatCurrency(day.monthlySpending)}</span>`;
+                monthlyHtml = `<button class="expand-btn" data-day="${idx}" onclick="toggleProjectionDetail(${idx})">▶</button><span class="proj-expense-val">-${formatCurrency(day.monthlySpending)}</span>`;
             }
         } else {
-            const hasExpBtn = day.expectedMonthlyLimit > 0 ? `<button class="expand-btn" data-day="${idx}" onclick="toggleProjectionDetail(${idx})">â–¶</button>` : '';
+            const hasExpBtn = day.expectedMonthlyLimit > 0 ? `<button class="expand-btn" data-day="${idx}" onclick="toggleProjectionDetail(${idx})">▶</button>` : '';
             monthlyHtml = `
                 ${hasExpBtn}<span class="timeline-real">${formatCurrency(day.monthlySpending)}</span>
                 <span class="timeline-limit">/ dist: ${formatCurrency(day.expectedMonthlyLimit)}</span>
@@ -1242,8 +1227,8 @@ function renderProjectionPage() {
             <td style="font-weight:600;${day.dayTotal >= 0 ? 'color:var(--income)' : 'color:var(--expense)'}">${day.dayTotal >= 0 ? '+' : ''}${formatCurrency(day.dayTotal)}</td>
             <td style="font-weight:700;${day.balance >= 0 ? 'color:var(--income)' : 'color:var(--expense)'}">${formatCurrency(day.balance)}</td>
         </tr>
-        ${hasBreakdown ? `<tr class="projection-detail hidden" id="detail-${idx}"><td></td><td colspan="6"><div class="detail-breakdown"><span style="font-size:0.75rem;margin-right:8px;font-weight:600;color:var(--text-muted)">OrÃ§. Mensal:</span> ${breakdownItems}</div></td></tr>` : ''}
-        ${hasDailyBreakdown ? `<tr class="projection-detail hidden" id="detail-daily-${idx}"><td></td><td colspan="6"><div class="detail-breakdown"><span style="font-size:0.75rem;margin-right:8px;font-weight:600;color:var(--text-muted)">Gastos DiÃ¡rios:</span> ${dailyBreakdownItems}</div></td></tr>` : ''}`;
+        ${hasBreakdown ? `<tr class="projection-detail hidden" id="detail-${idx}"><td></td><td colspan="6"><div class="detail-breakdown"><span style="font-size:0.75rem;margin-right:8px;font-weight:600;color:var(--text-muted)">Orç. Mensal:</span> ${breakdownItems}</div></td></tr>` : ''}
+        ${hasDailyBreakdown ? `<tr class="projection-detail hidden" id="detail-daily-${idx}"><td></td><td colspan="6"><div class="detail-breakdown"><span style="font-size:0.75rem;margin-right:8px;font-weight:600;color:var(--text-muted)">Gastos Diários:</span> ${dailyBreakdownItems}</div></td></tr>` : ''}`;
     }).join('');
 
     if (typeof updateAllCharts === 'function') updateAllCharts();
@@ -1254,7 +1239,7 @@ function toggleProjectionDetail(idx) {
     const btn = document.querySelector(`[data-day="${idx}"]`);
     if (detail) {
         detail.classList.toggle('hidden');
-        if (btn) btn.textContent = detail.classList.contains('hidden') ? 'â–¶' : 'â–¼';
+        if (btn) btn.textContent = detail.classList.contains('hidden') ? '▶' : '▼';
     }
 }
 
@@ -1270,7 +1255,7 @@ function populateFormCategories(type = 'expense') {
 }
 function populateFormBanks() {
     const sel = document.getElementById('tx-bank');
-    sel.innerHTML = '<option value="">Sem conta especÃ­fica</option>' + 
+    sel.innerHTML = '<option value="">Sem conta específica</option>' + 
         state.banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
 }
 
@@ -1284,11 +1269,11 @@ function switchSection(sectionId) {
 
     const titles = {
         'section-dashboard': 'Dashboard',
-        'section-transactions': 'TransaÃ§Ãµes',
-        'section-budget': 'OrÃ§amento',
+        'section-transactions': 'Transações',
+        'section-budget': 'Orçamento',
         'section-categories': 'Categorias',
         'section-banks': 'Minhas Contas',
-        'section-projection': 'VisÃ£o Mensal',
+        'section-projection': 'Visão Mensal',
         'section-investments': 'Investimentos'
     };
     document.getElementById('page-title').textContent = titles[sectionId] || 'Dashboard';
@@ -1345,7 +1330,7 @@ function openBudgetModal() {
                     <label>Tipo</label>
                     <select data-cat="${cat.id}" data-field="type" onchange="onBudgetTypeChange(this)">
                         <option value="monthly" ${!isDaily ? 'selected' : ''}>Mensal</option>
-                        <option value="daily" ${isDaily ? 'selected' : ''}>DiÃ¡rio</option>
+                        <option value="daily" ${isDaily ? 'selected' : ''}>Diário</option>
                     </select>
                 </div>
                 <div>
@@ -1353,10 +1338,10 @@ function openBudgetModal() {
                     <input type="number" data-cat="${cat.id}" data-field="limit" value="${config.limit || ''}" placeholder="0" min="0" step="10">
                 </div>
                 <div class="budget-monthly-opt ${isDaily ? 'hidden-field' : ''}">
-                    <label>DistribuiÃ§Ã£o</label>
+                    <label>Distribuição</label>
                     <select data-cat="${cat.id}" data-field="distribution" onchange="onDistributionChange(this)">
-                        <option value="spread" ${!isFixed ? 'selected' : ''}>Ao longo do mÃªs</option>
-                        <option value="fixed" ${isFixed ? 'selected' : ''}>Dia Ãºnico</option>
+                        <option value="spread" ${!isFixed ? 'selected' : ''}>Ao longo do mês</option>
+                        <option value="fixed" ${isFixed ? 'selected' : ''}>Dia único</option>
                     </select>
                 </div>
                 <div class="budget-monthly-opt ${isDaily || !isFixed ? 'hidden-field' : ''} fixed-day-field">
@@ -1464,24 +1449,24 @@ function initEventListeners() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(item.dataset.section); });
     });
-    document.getElementById('')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('transactions'); });
-    document.getElementById('')?.addEventListener('click', () => navigateTo('projection'));
-    document.getElementById('')?.addEventListener('click', () => navigateTo('investments'));
+    document.getElementById('link-see-all').addEventListener('click', (e) => { e.preventDefault(); navigateTo('transactions'); });
+    document.getElementById('nav-projection').addEventListener('click', () => navigateTo('projection'));
+    document.getElementById('nav-investments').addEventListener('click', () => navigateTo('investments'));
 
     // Month nav
-    document.getElementById('')?.addEventListener('click', () => changeMonth(-1));
-    document.getElementById('')?.addEventListener('click', () => changeMonth(1));
+    document.getElementById('btn-prev-month').addEventListener('click', () => changeMonth(-1));
+    document.getElementById('btn-next-month').addEventListener('click', () => changeMonth(1));
 
     // Add transaction
     const openTxModal = () => { resetTransactionForm(); openModal('transaction-modal'); };
-    document.getElementById('')?.addEventListener('click', openTxModal);
+    document.getElementById('btn-add-transaction').addEventListener('click', openTxModal);
     const mb = document.getElementById('btn-add-mobile');
     if (mb) mb.addEventListener('click', openTxModal);
 
     // Close modals
-    document.getElementById('')?.addEventListener('click', () => closeModal('transaction-modal'));
-    document.getElementById('')?.addEventListener('click', () => closeModal('budget-modal'));
-    document.getElementById('')?.addEventListener('click', () => closeModal('category-modal'));
+    document.getElementById('btn-close-transaction-modal').addEventListener('click', () => closeModal('transaction-modal'));
+    document.getElementById('btn-close-budget-modal').addEventListener('click', () => closeModal('budget-modal'));
+    document.getElementById('btn-close-category-modal').addEventListener('click', () => closeModal('category-modal'));
     document.querySelectorAll('.modal-overlay').forEach(o => {
         o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); });
     });
@@ -1497,17 +1482,17 @@ function initEventListeners() {
     });
 
     // Recurring toggle
-    document.getElementById('')?.addEventListener('change', (e) => {
+    document.getElementById('tx-recurring-toggle').addEventListener('change', (e) => {
         document.getElementById('recurring-fields').classList.toggle('hidden', !e.target.checked);
     });
 
     // Toggle recurring list
-    document.getElementById('')?.addEventListener('click', () => {
+    document.getElementById('btn-toggle-recurring').addEventListener('click', () => {
         document.getElementById('recurring-list').classList.toggle('collapsed');
     });
 
     // Transaction form submit
-    document.getElementById('')?.addEventListener('submit', (e) => {
+    document.getElementById('transaction-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const data = {
             type: document.getElementById('tx-type').value,
@@ -1534,8 +1519,8 @@ function initEventListeners() {
     });
 
     // Budget
-    document.getElementById('')?.addEventListener('click', openBudgetModal);
-    document.getElementById('')?.addEventListener('submit', (e) => {
+    document.getElementById('btn-set-budget').addEventListener('click', openBudgetModal);
+    document.getElementById('budget-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const budgets = {};
         state.categories.expense.forEach(cat => {
@@ -1558,9 +1543,9 @@ function initEventListeners() {
     });
 
     // Categories
-    document.getElementById('')?.addEventListener('click', () => openCategoryModal('income'));
-    document.getElementById('')?.addEventListener('click', () => openCategoryModal('expense'));
-    document.getElementById('')?.addEventListener('submit', (e) => {
+    document.getElementById('btn-add-income-cat').addEventListener('click', () => openCategoryModal('income'));
+    document.getElementById('btn-add-expense-cat').addEventListener('click', () => openCategoryModal('expense'));
+    document.getElementById('category-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const name = document.getElementById('cat-name').value.trim();
         const color = document.querySelector('#color-picker .color-option.selected')?.dataset.color || COLOR_POOL[0];
@@ -1572,7 +1557,7 @@ function initEventListeners() {
     });
 
     // Banks
-    document.getElementById('')?.addEventListener('click', () => {
+    document.getElementById('btn-add-bank').addEventListener('click', () => {
         document.getElementById('bank-form').reset();
         const cp = document.getElementById('bank-color-picker');
         cp.innerHTML = COLOR_POOL.map((c, i) => `<button type="button" class="color-option${i === 0 ? ' selected' : ''}" data-color="${c}" style="background:${c}" onclick="selectColor(this)"></button>`).join('');
@@ -1581,7 +1566,7 @@ function initEventListeners() {
         lucide.createIcons({ nodes: [ip] });
         openModal('bank-modal');
     });
-    document.getElementById('')?.addEventListener('submit', (e) => {
+    document.getElementById('bank-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const name = document.getElementById('bank-name').value.trim();
         const initialBalance = document.getElementById('bank-balance').value || 0;
@@ -1593,18 +1578,18 @@ function initEventListeners() {
     });
 
     // Filters
-    document.getElementById('')?.addEventListener('change', (e) => { state.filters.type = e.target.value; renderTransactionsPage(); });
-    document.getElementById('')?.addEventListener('change', (e) => { state.filters.category = e.target.value; renderTransactionsPage(); });
-    document.getElementById('')?.addEventListener('input', (e) => { state.filters.search = e.target.value; renderTransactionsPage(); });
+    document.getElementById('filter-type').addEventListener('change', (e) => { state.filters.type = e.target.value; renderTransactionsPage(); });
+    document.getElementById('filter-category').addEventListener('change', (e) => { state.filters.category = e.target.value; renderTransactionsPage(); });
+    document.getElementById('search-input').addEventListener('input', (e) => { state.filters.search = e.target.value; renderTransactionsPage(); });
 
     // Export / Import
-    document.getElementById('')?.addEventListener('click', exportData);
-    document.getElementById('')?.addEventListener('click', () => document.getElementById('import-file-input').click());
-    document.getElementById('')?.addEventListener('change', (e) => { if (e.target.files[0]) { importData(e.target.files[0]); e.target.value = ''; } });
+    document.getElementById('btn-export').addEventListener('click', exportData);
+    document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file-input').click());
+    document.getElementById('import-file-input').addEventListener('change', (e) => { if (e.target.files[0]) { importData(e.target.files[0]); e.target.value = ''; } });
 
     // Mobile
-    document.getElementById('')?.addEventListener('click', openMobileSidebar);
-    document.getElementById('')?.addEventListener('click', closeMobileSidebar);
+    document.getElementById('menu-toggle').addEventListener('click', openMobileSidebar);
+    document.getElementById('sidebar-overlay').addEventListener('click', closeMobileSidebar);
 
     // Escape
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id)); });
@@ -1624,8 +1609,8 @@ function initEventListeners() {
         const yieldGrp = document.getElementById('inv-yield-group');
         if (sel) {
             sel.innerHTML = isFixa 
-                ? '<option value="CDB">CDB</option><option value="Tesouro Direto">Tesouro Direto</option><option value="LCI/LCA">LCI / LCA</option><option value="DebÃªntures">DebÃªntures</option><option value="Outros">Outros</option>'
-                : '<option value="AÃ§Ãµes">AÃ§Ãµes</option><option value="FIIs">FIIs</option><option value="ETFs">ETFs</option><option value="BDRs">BDRs</option><option value="Cripto">Criptomoedas</option><option value="Outros">Outros</option>';
+                ? '<option value="CDB">CDB</option><option value="Tesouro Direto">Tesouro Direto</option><option value="LCI/LCA">LCI / LCA</option><option value="Debêntures">Debêntures</option><option value="Outros">Outros</option>'
+                : '<option value="Ações">Ações</option><option value="FIIs">FIIs</option><option value="ETFs">ETFs</option><option value="BDRs">BDRs</option><option value="Cripto">Criptomoedas</option><option value="Outros">Outros</option>';
         }
         if (yieldGrp) yieldGrp.style.display = isFixa ? 'block' : 'none';
         if (!isFixa) document.getElementById('inv-yield').value = '';
@@ -1655,7 +1640,7 @@ function initEventListeners() {
     document.getElementById('inv-class-var')?.addEventListener('click', (e) => {
         document.getElementById('inv-class-var').classList.add('active');
         document.getElementById('inv-class-fixa').classList.remove('active');
-        document.getElementById('inv-class').value = 'Renda VariÃ¡vel';
+        document.getElementById('inv-class').value = 'Renda Variável';
         updateInvOptions(false);
     });
     
@@ -1698,4 +1683,3 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
