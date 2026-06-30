@@ -231,8 +231,12 @@ function renderInvestmentsPage() {
             <div class="cat-header">
                 <div class="cat-icon" style="background:${inv.color}18;color:${inv.color}"><i data-lucide="${inv.icon}"></i></div>
                 <div class="cat-info">
-                    <h4>${inv.name}</h4>
-                    <span style="font-size: 0.75rem; color: var(--text-muted)">${inv.broker} | ${inv.type} | Alvo: ${inv.targetPercent || 0}%</span>
+                    <h4 style="margin-bottom: 2px;">${inv.name}</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">${inv.broker} | ${inv.type}</span>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                        <span style="font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">🎯 Alvo: ${inv.targetPercent || 0}%</span>
+                        ${inv.yieldRate ? `<span style="font-size: 0.7rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">📈 ${inv.yieldRate}</span>` : ''}
+                    </div>
                 </div>
             </div>
             <div style="margin-top: 16px;">
