@@ -203,6 +203,7 @@ async function addCategory(type, data) {
 }
 
 async function deleteCategory(id) {
+    if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
     const hasTx = state.transactions.some(t => t.category === id);
     const hasRec = state.recurring.some(r => r.category === id);
     if (hasTx || hasRec) {
@@ -233,6 +234,7 @@ async function addBank(data) {
 }
 
 async function deleteBank(id) {
+    if (!confirm('Tem certeza que deseja excluir esta conta bancária?')) return;
     const hasTx = state.transactions.some(t => t.bankId === id);
     const hasRec = state.recurring.some(r => r.bankId === id);
     if (hasTx || hasRec) {
@@ -968,15 +970,40 @@ function populateFormBanks() {
 }
 
 // ===== NAVIGATION =====
+function switchSection(sectionId) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(sectionId).classList.add('active');
+    document.querySelector(`.nav-item[data-section="${sectionId.replace('section-', '')}"]`).classList.add('active');
+
+    const titles = {
+        'section-dashboard': 'Dashboard',
+        'section-transactions': 'Transações',
+        'section-budget': 'Orçamento',
+        'section-categories': 'Categorias',
+        'section-banks': 'Minhas Contas',
+        'section-projection': 'Visão Mensal'
+    };
+    document.getElementById('page-title').textContent = titles[sectionId] || 'Dashboard';
+    
+    // Hide month navigator in sections that don't need it
+    const monthNav = document.getElementById('month-navigator');
+    if (sectionId === 'section-banks' || sectionId === 'section-categories') {
+        monthNav.style.display = 'none';
+    } else {
+        monthNav.style.display = 'flex';
+    }
+
+    if(window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+}
+
 function navigateTo(section) {
     state.currentSection = section;
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(`section-${section}`).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const navEl = document.querySelector(`[data-section="${section}"]`);
-    if (navEl) navEl.classList.add('active');
-    const titles = { dashboard: 'Dashboard', transactions: 'Transações', budget: 'Orçamento', categories: 'Categorias', projection: 'Visão Mensal', banks: 'Minhas Contas' };
-    document.getElementById('page-title').textContent = titles[section] || section;
+    switchSection('section-' + section);
     if (section === 'transactions') renderTransactionsPage();
     if (section === 'budget') renderBudgetPage();
     if (section === 'categories') renderCategoriesPage();
