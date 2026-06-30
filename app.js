@@ -118,7 +118,7 @@ async function loadState() {
 
             state.investments = (invs.data || []).map(i => ({
                 id: i.id, name: i.name, broker: i.broker, class: i.class, type: i.type,
-                yieldRate: i.yield_rate, color: i.color, icon: i.icon
+                yieldRate: i.yield_rate, color: i.color, icon: i.icon, targetPercent: parseFloat(i.target_percent || 0)
             }));
             state.investment_transactions = (invTxs.data || []).map(t => ({
                 id: t.id, investmentId: t.investment_id, date: t.date, type: t.type, amount: parseFloat(t.amount)
@@ -226,12 +226,13 @@ function renderInvestmentsPage() {
         totalRendimento += yieldAmt;
 
         return `
-        <div class="category-card" style="border-left-color: ${inv.color}">
+        <div class="category-card" style="border-left-color: ${inv.color}; position: relative;">
+            <button onclick="openEditInvestmentModal('${inv.id}')" style="position: absolute; top: 12px; right: 12px; background: none; border: none; cursor: pointer; color: var(--text-muted);"><i data-lucide="settings" style="width: 16px; height: 16px;"></i></button>
             <div class="cat-header">
                 <div class="cat-icon" style="background:${inv.color}18;color:${inv.color}"><i data-lucide="${inv.icon}"></i></div>
                 <div class="cat-info">
                     <h4>${inv.name}</h4>
-                    <span style="font-size: 0.75rem; color: var(--text-muted)">${inv.broker} | ${inv.type}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted)">${inv.broker} | ${inv.type} | Alvo: ${inv.targetPercent || 0}%</span>
                 </div>
             </div>
             <div style="margin-top: 16px;">
@@ -271,6 +272,7 @@ async function addInvestment(e) {
         class: document.getElementById('inv-class').value,
         type: document.getElementById('inv-type').value,
         yieldRate: document.getElementById('inv-yield').value || null,
+        targetPercent: parseFloat(document.getElementById('inv-target').value || 0),
         color: isVar ? '#8b5cf6' : '#3b82f6',
         icon: isVar ? 'trending-up' : 'shield'
     };
@@ -282,7 +284,7 @@ async function addInvestment(e) {
     
     const { error } = await sb.from('investments').insert([{
         id: inv.id, name: inv.name, broker: inv.broker, class: inv.class, type: inv.type,
-        yield_rate: inv.yieldRate, color: inv.color, icon: inv.icon
+        yield_rate: inv.yieldRate, target_percent: inv.targetPercent, color: inv.color, icon: inv.icon
     }]);
     if(error) alert('Erro ao salvar investimento na nuvem: ' + error.message);
 }
@@ -383,6 +385,94 @@ async function deleteInvestmentTx(txId, invId) {
     
     const { error } = await sb.from('investment_transactions').delete().eq('id', txId);
     if(error) alert('Erro ao excluir na nuvem: ' + error.message);
+}
+
+function openEditInvestmentModal(id) {
+    const inv = state.investments.find(i => i.id === id);
+    if(!inv) return;
+    document.getElementById('edit-inv-id').value = id;
+    document.getElementById('edit-inv-name').value = inv.name;
+    document.getElementById('edit-inv-target').value = inv.targetPercent || 0;
+    document.getElementById('inv-edit-modal').classList.add('open');
+}
+
+async function saveEditedInvestment(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit-inv-id').value;
+    const inv = state.investments.find(i => i.id === id);
+    if(!inv) return;
+    
+    inv.name = document.getElementById('edit-inv-name').value;
+    inv.targetPercent = parseFloat(document.getElementById('edit-inv-target').value || 0);
+    
+    renderInvestmentsPage();
+    closeModal('inv-edit-modal');
+    showToast('Ativo atualizado.', 'success');
+    
+    await sb.from('investments').update({ name: inv.name, target_percent: inv.targetPercent }).eq('id', id);
+}
+
+function calculateRebalance() {
+    const amount = parseFloat(document.getElementById('rebalance-amount').value || 0);
+    if (amount <= 0) return;
+    
+    // Calculate current balances
+    const balances = {};
+    let currentTotal = 0;
+    state.investments.forEach(inv => {
+        const txs = state.investment_transactions.filter(t => t.investmentId === inv.id);
+        const bal = txs.reduce((sum, t) => sum + ((t.type === 'aporte' || t.type === 'rendimento') ? t.amount : -t.amount), 0);
+        balances[inv.id] = bal;
+        currentTotal += bal;
+    });
+    
+    const newTotal = currentTotal + amount;
+    let totalTargetPercent = 0;
+    const recommendations = [];
+    
+    state.investments.forEach(inv => {
+        totalTargetPercent += (inv.targetPercent || 0);
+        const targetValue = newTotal * ((inv.targetPercent || 0) / 100);
+        const deficit = targetValue - balances[inv.id];
+        
+        if (deficit > 0) {
+            recommendations.push({ name: inv.name, color: inv.color, deficit: deficit });
+        }
+    });
+    
+    const warning = document.getElementById('rebalance-warning');
+    if (Math.abs(totalTargetPercent - 100) > 0.01) {
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+    
+    // Allocate the amount based on who has the largest deficit, proportionally
+    let totalDeficit = recommendations.reduce((sum, r) => sum + r.deficit, 0);
+    const list = document.getElementById('rebalance-list');
+    
+    if (totalDeficit <= 0 || recommendations.length === 0) {
+        list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">Sua carteira já está balanceada, ou o aporte é muito pequeno para recalcular.</div>';
+    } else {
+        // Distribute `amount` proportionally to the deficits
+        let allocHtml = '';
+        recommendations.forEach(r => {
+            let toInvest = (r.deficit / totalDeficit) * amount;
+            if (toInvest < 0.01) toInvest = 0;
+            if (toInvest > 0) {
+                allocHtml += `
+                <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${r.color}"></span>
+                        <span>${r.name}</span>
+                    </div>
+                    <span style="font-weight: 600; color: var(--income);">${formatCurrency(toInvest)}</span>
+                </div>`;
+            }
+        });
+        list.innerHTML = allocHtml;
+    }
+    document.getElementById('rebalance-results').style.display = 'block';
 }
 
 // ===== CATEGORIES CRUD =====
@@ -1502,6 +1592,13 @@ function initEventListeners() {
 
     // Inv Events
     const btnAddInv = document.getElementById('btn-add-investment');
+    const btnRebalance = document.getElementById('btn-rebalance');
+    
+    if (btnRebalance) btnRebalance.addEventListener('click', () => {
+        document.getElementById('rebalance-amount').value = '';
+        document.getElementById('rebalance-results').style.display = 'none';
+        document.getElementById('inv-rebalance-modal').classList.add('open');
+    });
     
     const updateInvOptions = (isFixa) => {
         const sel = document.getElementById('inv-type');
@@ -1542,6 +1639,9 @@ function initEventListeners() {
         document.getElementById('inv-class').value = 'Renda Variável';
         updateInvOptions(false);
     });
+    
+    const editInvForm = document.getElementById('inv-edit-form');
+    if (editInvForm) editInvForm.addEventListener('submit', saveEditedInvestment);
 }
 
 function resetTransactionForm() {
