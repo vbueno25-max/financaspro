@@ -1,5 +1,5 @@
-/* ============================================
-   FinançasPro v2 — Chart.js Configuration
+﻿/* ============================================
+   FinanÃ§asPro v2 â€” Chart.js Configuration
    ============================================ */
 
 let incomeExpensesChart = null;
@@ -247,7 +247,7 @@ function renderInvestmentsCharts() {
         window.invCompChart = new Chart(compCanvas.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Renda Fixa', 'Renda Vari�vel'],
+                labels: ['Renda Fixa', 'Renda Variável'],
                 datasets: [{ data: [fixo, var_], backgroundColor: ['#3b82f6', '#8b5cf6'], borderWidth: 0 }]
             },
             options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
@@ -279,7 +279,7 @@ function renderInvestmentsCharts() {
                     return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
                 }),
                 datasets: [{
-                    label: 'Patrim�nio', data: data, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    label: 'Patrimônio', data: data, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     borderWidth: 3, fill: true, tension: 0.4
                 }]
             },
@@ -290,3 +290,4 @@ function renderInvestmentsCharts() {
         });
     }
 }
+

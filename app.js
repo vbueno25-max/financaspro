@@ -1442,11 +1442,25 @@ function initEventListeners() {
 
     // Inv Events
     const btnAddInv = document.getElementById('btn-add-investment');
+    
+    const updateInvOptions = (isFixa) => {
+        const sel = document.getElementById('inv-type');
+        const yieldGrp = document.getElementById('inv-yield-group');
+        if (sel) {
+            sel.innerHTML = isFixa 
+                ? '<option value="CDB">CDB</option><option value="Tesouro Direto">Tesouro Direto</option><option value="LCI/LCA">LCI / LCA</option><option value="Debêntures">Debêntures</option><option value="Outros">Outros</option>'
+                : '<option value="Ações">Ações</option><option value="FIIs">FIIs</option><option value="ETFs">ETFs</option><option value="BDRs">BDRs</option><option value="Cripto">Criptomoedas</option><option value="Outros">Outros</option>';
+        }
+        if (yieldGrp) yieldGrp.style.display = isFixa ? 'block' : 'none';
+        if (!isFixa) document.getElementById('inv-yield').value = '';
+    };
+
     if(btnAddInv) btnAddInv.addEventListener('click', () => {
         document.getElementById('investment-form').reset();
         document.getElementById('inv-class').value = 'Renda Fixa';
         document.getElementById('inv-class-fixa').classList.add('active');
         document.getElementById('inv-class-var').classList.remove('active');
+        updateInvOptions(true);
         document.getElementById('investment-modal').classList.add('open');
     });
     
@@ -1460,11 +1474,13 @@ function initEventListeners() {
         document.getElementById('inv-class-fixa').classList.add('active');
         document.getElementById('inv-class-var').classList.remove('active');
         document.getElementById('inv-class').value = 'Renda Fixa';
+        updateInvOptions(true);
     });
     document.getElementById('inv-class-var')?.addEventListener('click', (e) => {
         document.getElementById('inv-class-var').classList.add('active');
         document.getElementById('inv-class-fixa').classList.remove('active');
         document.getElementById('inv-class').value = 'Renda Variável';
+        updateInvOptions(false);
     });
 }
 
