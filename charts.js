@@ -229,3 +229,64 @@ function updateAllCharts() {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(initCharts, 100);
 });
+
+function renderInvestmentsCharts() {
+    if (!state.investments || state.investments.length === 0) return;
+
+    let fixo = 0, var_ = 0;
+    state.investments.forEach(inv => {
+        const txs = state.investment_transactions.filter(t => t.investmentId === inv.id);
+        const bal = txs.reduce((sum, t) => sum + ((t.type === 'aporte' || t.type === 'rendimento') ? t.amount : -t.amount), 0);
+        if (inv.class === 'Renda Fixa') fixo += bal;
+        else var_ += bal;
+    });
+
+    const compCanvas = document.getElementById('chart-investments-composition');
+    if (compCanvas) {
+        if (window.invCompChart) window.invCompChart.destroy();
+        window.invCompChart = new Chart(compCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Renda Fixa', 'Renda Variável'],
+                datasets: [{ data: [fixo, var_], backgroundColor: ['#3b82f6', '#8b5cf6'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+        });
+    }
+
+    const evoCanvas = document.getElementById('chart-investments-evolution');
+    if (evoCanvas) {
+        if (window.invEvoChart) window.invEvoChart.destroy();
+        
+        const monthTotals = {};
+        let runningTotal = 0;
+        const sortedTxs = [...state.investment_transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        sortedTxs.forEach(t => {
+            const m = t.date.substring(0, 7);
+            runningTotal += (t.type === 'aporte' || t.type === 'rendimento') ? t.amount : -t.amount;
+            monthTotals[m] = runningTotal;
+        });
+        
+        const labels = Object.keys(monthTotals).slice(-6);
+        const data = labels.map(m => monthTotals[m]);
+
+        window.invEvoChart = new Chart(evoCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels.map(m => {
+                    const d = new Date(m + '-01T00:00:00');
+                    return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+                }),
+                datasets: [{
+                    label: 'Patrimônio', data: data, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3, fill: true, tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+            }
+        });
+    }
+}

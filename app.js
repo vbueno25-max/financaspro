@@ -42,6 +42,8 @@ const FREQ_LABELS = { daily:'Diário', weekly:'Semanal', biweekly:'Quinzenal', m
 const state = {
     transactions: [],
     recurring: [],
+    investments: [],
+    investment_transactions: [],
     categories: { income: [], expense: [] },
     banks: [],         // { id, name, icon, color, initialBalance }
     budgets: {},       // { catId: { type: 'monthly'|'daily', limit, distribution, fixedDay } }
@@ -86,16 +88,20 @@ function saveState() {
     localStorage.setItem('fp_categories', JSON.stringify(state.categories));
     localStorage.setItem('fp_budgets_v3', JSON.stringify(state.budgets));
     localStorage.setItem('fp_banks', JSON.stringify(state.banks));
+    localStorage.setItem('fp_investments', JSON.stringify(state.investments));
+    localStorage.setItem('fp_inv_txs', JSON.stringify(state.investment_transactions));
 }
 
 async function loadState() {
     try {
-        const [txs, cats, banks, recs, buds] = await Promise.all([
+        const [txs, cats, banks, recs, buds, invs, invTxs] = await Promise.all([
             sb.from('transactions').select('*'),
             sb.from('categories').select('*'),
             sb.from('banks').select('*'),
             sb.from('recurring').select('*'),
-            sb.from('budgets').select('*')
+            sb.from('budgets').select('*'),
+            sb.from('investments').select('*'),
+            sb.from('investment_transactions').select('*')
         ]);
         
         if (cats.data && cats.data.length > 0) {
@@ -108,6 +114,14 @@ async function loadState() {
                 id: r.id, type: r.type, amount: r.amount, category: r.category,
                 bankId: r.bank_id, description: r.description, frequency: r.frequency,
                 startDate: r.start_date, endDate: r.end_date, nextDate: r.next_date, active: r.active
+            }));
+
+            state.investments = (invs.data || []).map(i => ({
+                id: i.id, name: i.name, broker: i.broker, class: i.class, type: i.type,
+                yieldRate: i.yield_rate, color: i.color, icon: i.icon
+            }));
+            state.investment_transactions = (invTxs.data || []).map(t => ({
+                id: t.id, investmentId: t.investment_id, date: t.date, type: t.type, amount: parseFloat(t.amount)
             }));
 
             state.categories.income = cats.data.filter(c => c.type === 'income');
@@ -150,12 +164,16 @@ async function loadState() {
         const c = localStorage.getItem('fp_categories');
         const b = localStorage.getItem('fp_budgets_v3');
         const storedBanks = localStorage.getItem('fp_banks');
+        const invs = localStorage.getItem('fp_investments');
+        const invTxs = localStorage.getItem('fp_inv_txs');
         
         if (t) state.transactions = JSON.parse(t);
         if (r) state.recurring = JSON.parse(r);
         if (c) state.categories = JSON.parse(c);
         if (storedBanks) state.banks = JSON.parse(storedBanks);
         if (b) state.budgets = JSON.parse(b);
+        if (invs) state.investments = JSON.parse(invs);
+        if (invTxs) state.investment_transactions = JSON.parse(invTxs);
         
         await migrateLocalToSupabase();
     } catch (e) { console.error('Local load error:', e); }
@@ -171,22 +189,140 @@ async function migrateLocalToSupabase() {
     if (budgArr.length > 0) await sb.from('budgets').upsert(budgArr).catch(()=>{});
 }
 
-function migrateOldBudgets(budgets, dailyLimits) {
-    const migrated = {};
-    for (const [k, v] of Object.entries(budgets)) {
-        if (typeof v === 'number') {
-            migrated[k] = { type: 'monthly', limit: v, distribution: 'spread', fixedDay: null };
-        } else if (v.limit > 0) {
-            migrated[k] = { type: 'monthly', limit: v.limit, distribution: v.distribution || 'spread', fixedDay: v.fixedDay || null };
-        }
+// ===== INVESTMENTS =====
+
+function renderInvestmentsPage() {
+    const grid = document.getElementById('investments-grid');
+    if (state.investments.length === 0) {
+        grid.innerHTML = '<p class="empty-state">Nenhum ativo cadastrado.</p>';
+        document.getElementById('investments-total').textContent = 'R$ 0,00';
+        document.getElementById('investments-invested').textContent = 'R$ 0,00';
+        document.getElementById('investments-yield').textContent = 'R$ 0,00';
+        if (typeof renderInvestmentsCharts === 'function') renderInvestmentsCharts();
+        return;
     }
-    // Override with daily limits if they exist (since it's exclusive now, we prefer daily if it was set)
-    for (const [k, v] of Object.entries(dailyLimits)) {
-        if (v > 0) {
-            migrated[k] = { type: 'daily', limit: v, distribution: 'spread', fixedDay: null };
-        }
-    }
-    return migrated;
+
+    let totalPatrimonio = 0;
+    let totalInvestido = 0;
+    let totalRendimento = 0;
+
+    const cards = state.investments.map(inv => {
+        // Calculate asset numbers
+        const txs = state.investment_transactions.filter(t => t.investmentId === inv.id);
+        let aportes = 0, retiradas = 0, rendimentos = 0, perdas = 0;
+        txs.forEach(t => {
+            if (t.type === 'aporte') aportes += t.amount;
+            if (t.type === 'retirada') retiradas += t.amount;
+            if (t.type === 'rendimento') rendimentos += t.amount;
+            if (t.type === 'perda') perdas += t.amount;
+        });
+        
+        const invested = aportes - retiradas;
+        const yieldAmt = rendimentos - perdas;
+        const balance = invested + yieldAmt;
+
+        totalPatrimonio += balance;
+        totalInvestido += invested;
+        totalRendimento += yieldAmt;
+
+        return `
+        <div class="category-card" style="border-left-color: ${inv.color}">
+            <div class="cat-header">
+                <div class="cat-icon" style="background:${inv.color}18;color:${inv.color}"><i data-lucide="${inv.icon}"></i></div>
+                <div class="cat-info">
+                    <h4>${inv.name}</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted)">${inv.broker} | ${inv.type}</span>
+                </div>
+            </div>
+            <div style="margin-top: 16px;">
+                <p style="font-size: 0.8rem; color: var(--text-secondary)">Saldo Atual</p>
+                <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 8px;">${formatCurrency(balance)}</h3>
+                
+                <div style="display:flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+                    <span>Investido: ${formatCurrency(invested)}</span>
+                    <span style="color: ${yieldAmt >= 0 ? 'var(--income)' : 'var(--expense)'}">Rend: ${formatCurrency(yieldAmt)}</span>
+                </div>
+            </div>
+            <div class="cat-actions" style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; display: flex; justify-content: space-between;">
+                <button class="btn btn-sm btn-primary" onclick="openInvestmentTxModal('${inv.id}')" style="flex: 1; margin-right: 8px;">Atualizar</button>
+                <button class="category-delete-btn" onclick="deleteInvestment('${inv.id}')" title="Excluir"><i data-lucide="trash-2"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+    
+    grid.innerHTML = cards;
+    document.getElementById('investments-total').textContent = formatCurrency(totalPatrimonio);
+    document.getElementById('investments-invested').textContent = formatCurrency(totalInvestido);
+    document.getElementById('investments-yield').textContent = formatCurrency(totalRendimento);
+    document.getElementById('investments-yield').style.color = totalRendimento >= 0 ? 'var(--income)' : 'var(--expense)';
+    
+    lucide.createIcons({ nodes: [grid] });
+    if (typeof renderInvestmentsCharts === 'function') renderInvestmentsCharts();
+}
+
+async function addInvestment(e) {
+    e.preventDefault();
+    const isVar = document.getElementById('inv-class').value === 'Renda Variável';
+    const inv = {
+        id: generateId(),
+        name: document.getElementById('inv-name').value,
+        broker: document.getElementById('inv-broker').value,
+        class: document.getElementById('inv-class').value,
+        type: document.getElementById('inv-type').value,
+        yieldRate: document.getElementById('inv-yield').value || null,
+        color: isVar ? '#8b5cf6' : '#3b82f6',
+        icon: isVar ? 'trending-up' : 'shield'
+    };
+    
+    state.investments.push(inv);
+    renderInvestmentsPage();
+    closeModal('investment-modal');
+    showToast('Investimento cadastrado.', 'success');
+    
+    const { error } = await sb.from('investments').insert([{
+        id: inv.id, name: inv.name, broker: inv.broker, class: inv.class, type: inv.type,
+        yield_rate: inv.yieldRate, color: inv.color, icon: inv.icon
+    }]);
+    if(error) alert('Erro ao salvar investimento na nuvem: ' + error.message);
+}
+
+async function deleteInvestment(id) {
+    if(!confirm('Excluir este investimento? Todo o histórico de movimentações dele será perdido.')) return;
+    state.investments = state.investments.filter(i => i.id !== id);
+    state.investment_transactions = state.investment_transactions.filter(t => t.investmentId !== id);
+    renderInvestmentsPage();
+    showToast('Investimento excluído.', 'info');
+    
+    const { error } = await sb.from('investments').delete().eq('id', id);
+    if(error) alert('Erro ao excluir na nuvem: ' + error.message);
+}
+
+function openInvestmentTxModal(invId) {
+    document.getElementById('inv-tx-asset-id').value = invId;
+    document.getElementById('inv-tx-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('inv-tx-amount').value = '';
+    document.getElementById('inv-tx-modal').classList.add('active');
+}
+
+async function addInvestmentTx(e) {
+    e.preventDefault();
+    const tx = {
+        id: generateId(),
+        investmentId: document.getElementById('inv-tx-asset-id').value,
+        date: document.getElementById('inv-tx-date').value,
+        type: document.getElementById('inv-tx-type').value,
+        amount: parseFloat(document.getElementById('inv-tx-amount').value)
+    };
+    
+    state.investment_transactions.push(tx);
+    renderInvestmentsPage();
+    closeModal('inv-tx-modal');
+    showToast('Atualização registrada.', 'success');
+    
+    const { error } = await sb.from('investment_transactions').insert([{
+        id: tx.id, investment_id: tx.investmentId, date: tx.date, type: tx.type, amount: tx.amount
+    }]);
+    if(error) alert('Erro ao salvar atualização na nuvem: ' + error.message);
 }
 
 // ===== CATEGORIES CRUD =====
@@ -983,13 +1119,14 @@ function switchSection(sectionId) {
         'section-budget': 'Orçamento',
         'section-categories': 'Categorias',
         'section-banks': 'Minhas Contas',
-        'section-projection': 'Visão Mensal'
+        'section-projection': 'Visão Mensal',
+        'section-investments': 'Investimentos'
     };
     document.getElementById('page-title').textContent = titles[sectionId] || 'Dashboard';
     
     // Hide month navigator in sections that don't need it
     const monthNav = document.getElementById('month-navigator');
-    if (sectionId === 'section-banks' || sectionId === 'section-categories') {
+    if (sectionId === 'section-banks' || sectionId === 'section-categories' || sectionId === 'section-investments') {
         monthNav.style.display = 'none';
     } else {
         monthNav.style.display = 'flex';
@@ -1009,6 +1146,7 @@ function navigateTo(section) {
     if (section === 'categories') renderCategoriesPage();
     if (section === 'projection') renderProjectionPage();
     if (section === 'banks') renderBanksPage();
+    if (section === 'investments') renderInvestmentsPage();
     closeMobileSidebar();
 }
 
@@ -1158,6 +1296,8 @@ function initEventListeners() {
         item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(item.dataset.section); });
     });
     document.getElementById('link-see-all').addEventListener('click', (e) => { e.preventDefault(); navigateTo('transactions'); });
+    document.getElementById('nav-projection').addEventListener('click', () => navigateTo('projection'));
+    document.getElementById('nav-investments').addEventListener('click', () => navigateTo('investments'));
 
     // Month nav
     document.getElementById('btn-prev-month').addEventListener('click', () => changeMonth(-1));
@@ -1299,6 +1439,33 @@ function initEventListeners() {
 
     // Escape
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id)); });
+
+    // Inv Events
+    const btnAddInv = document.getElementById('btn-add-investment');
+    if(btnAddInv) btnAddInv.addEventListener('click', () => {
+        document.getElementById('investment-form').reset();
+        document.getElementById('inv-class').value = 'Renda Fixa';
+        document.getElementById('inv-class-fixa').classList.add('active');
+        document.getElementById('inv-class-var').classList.remove('active');
+        document.getElementById('investment-modal').classList.add('active');
+    });
+    
+    const invForm = document.getElementById('investment-form');
+    if(invForm) invForm.addEventListener('submit', addInvestment);
+    
+    const invTxForm = document.getElementById('inv-tx-form');
+    if(invTxForm) invTxForm.addEventListener('submit', addInvestmentTx);
+    
+    document.getElementById('inv-class-fixa')?.addEventListener('click', (e) => {
+        document.getElementById('inv-class-fixa').classList.add('active');
+        document.getElementById('inv-class-var').classList.remove('active');
+        document.getElementById('inv-class').value = 'Renda Fixa';
+    });
+    document.getElementById('inv-class-var')?.addEventListener('click', (e) => {
+        document.getElementById('inv-class-var').classList.add('active');
+        document.getElementById('inv-class-fixa').classList.remove('active');
+        document.getElementById('inv-class').value = 'Renda Variável';
+    });
 }
 
 function resetTransactionForm() {

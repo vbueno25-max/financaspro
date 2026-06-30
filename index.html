@@ -37,7 +37,12 @@
                 <i data-lucide="tags"></i><span>Categorias</span>
             </a>
             <a href="#" class="nav-item" data-section="projection" id="nav-projection">
-                <i data-lucide="calendar-days"></i><span>Visão Mensal</span>
+                <i data-lucide="line-chart"></i>
+                <span>Visão Mensal</span>
+            </a>
+            <a href="#" class="nav-item" data-section="investments" id="nav-investments">
+                <i data-lucide="trending-up"></i>
+                <span>Investimentos</span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -209,6 +214,41 @@
                 <div class="chart-wrapper"><canvas id="chart-projection"></canvas></div>
             </div>
         </section>
+
+        <!-- ===== INVESTMENTS ===== -->
+        <section id="section-investments" class="section">
+            <div class="overview-grid">
+                <div class="overview-card" style="border-top: 4px solid var(--primary)">
+                    <p class="card-label">Patrimônio Total</p>
+                    <h2 class="card-value" id="investments-total">R$ 0,00</h2>
+                </div>
+                <div class="overview-card" style="border-top: 4px solid var(--accent)">
+                    <p class="card-label">Total Investido</p>
+                    <h2 class="card-value" id="investments-invested">R$ 0,00</h2>
+                </div>
+                <div class="overview-card" style="border-top: 4px solid var(--income)">
+                    <p class="card-label">Rendimento Total</p>
+                    <h2 class="card-value" id="investments-yield">R$ 0,00</h2>
+                </div>
+            </div>
+            
+            <div class="dashboard-charts" style="margin-top: 24px;">
+                <div class="chart-card">
+                    <div class="chart-card-header"><h3>Composição (Fixo vs Variável)</h3></div>
+                    <div class="chart-wrapper"><canvas id="chart-investments-composition"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header"><h3>Evolução Patrimonial</h3></div>
+                    <div class="chart-wrapper"><canvas id="chart-investments-evolution"></canvas></div>
+                </div>
+            </div>
+
+            <div class="categories-header" style="margin-top: 32px;">
+                <h3>Meus Ativos</h3>
+                <button class="btn btn-primary btn-sm" id="btn-add-investment"><i data-lucide="plus"></i><span>Novo Ativo</span></button>
+            </div>
+            <div class="categories-grid" id="investments-grid"></div>
+        </section>
     </main>
 
     <!-- Transaction Modal -->
@@ -356,6 +396,87 @@
     </div>
 
     <div class="toast-container" id="toast-container"></div>
+
+    <!-- Investment Modal -->
+    <div class="modal-overlay" id="investment-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Novo Ativo</h3>
+                <button class="close-modal" onclick="closeModal('investment-modal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="investment-form">
+                    <div class="form-group">
+                        <label for="inv-name">Nome do Ativo</label>
+                        <input type="text" id="inv-name" class="form-control" placeholder="Ex: Tesouro Selic 2029" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-broker">Corretora / Banco</label>
+                        <input type="text" id="inv-broker" class="form-control" placeholder="Ex: XP, NuInvest" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Classe</label>
+                        <div class="type-toggle">
+                            <button type="button" class="type-btn active" data-type="Renda Fixa" id="inv-class-fixa" style="border-color: var(--primary); color: var(--primary)"><i data-lucide="shield"></i> Renda Fixa</button>
+                            <button type="button" class="type-btn" data-type="Renda Variável" id="inv-class-var" style="border-color: var(--accent); color: var(--accent)"><i data-lucide="trending-up"></i> Renda Variável</button>
+                        </div>
+                        <input type="hidden" id="inv-class" value="Renda Fixa">
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-type">Tipo de Investimento</label>
+                        <select id="inv-type" class="form-control" required>
+                            <option value="CDB">CDB</option>
+                            <option value="Tesouro Direto">Tesouro Direto</option>
+                            <option value="LCI/LCA">LCI / LCA</option>
+                            <option value="Ações">Ações</option>
+                            <option value="FIIs">FIIs</option>
+                            <option value="Cripto">Criptomoedas</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-yield">Taxa de Rendimento (Opcional)</label>
+                        <input type="text" id="inv-yield" class="form-control" placeholder="Ex: 100% CDI, IPCA + 5%">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Salvar Ativo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Investment Transaction Modal -->
+    <div class="modal-overlay" id="inv-tx-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Atualizar Saldo</h3>
+                <button class="close-modal" onclick="closeModal('inv-tx-modal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="inv-tx-form">
+                    <input type="hidden" id="inv-tx-asset-id">
+                    <div class="form-group">
+                        <label for="inv-tx-date">Data</label>
+                        <input type="date" id="inv-tx-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-tx-type">Tipo de Movimentação</label>
+                        <select id="inv-tx-type" class="form-control" required>
+                            <option value="aporte">Aporte (Comprei mais)</option>
+                            <option value="rendimento">Rendimento (Ganho)</option>
+                            <option value="retirada">Retirada (Vendi/Saquei)</option>
+                            <option value="perda">Perda (Desvalorizou)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-tx-amount">Valor (R$)</label>
+                        <input type="number" id="inv-tx-amount" step="0.01" class="form-control" placeholder="0.00" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Registrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script src="charts.js"></script>
 </body>
