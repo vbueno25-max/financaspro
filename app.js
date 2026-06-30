@@ -1479,9 +1479,9 @@ function initEventListeners() {
     if (mb) mb.addEventListener('click', openTxModal);
 
     // Close modals
-    document.getElementById('btn-close-transaction-modal').addEventListener('click', () => closeModal('transaction-modal'));
-    document.getElementById('btn-close-budget-modal').addEventListener('click', () => closeModal('budget-modal'));
-    document.getElementById('btn-close-category-modal').addEventListener('click', () => closeModal('category-modal'));
+    document.getElementById('btn-close-transaction-modal')?.addEventListener('click', () => closeModal('transaction-modal'));
+    document.getElementById('btn-close-budget-modal')?.addEventListener('click', () => closeModal('budget-modal'));
+    document.getElementById('btn-close-category-modal')?.addEventListener('click', () => closeModal('category-modal'));
     document.querySelectorAll('.modal-overlay').forEach(o => {
         o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); });
     });
